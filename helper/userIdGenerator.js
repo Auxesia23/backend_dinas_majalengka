@@ -64,27 +64,9 @@ const generateGaleriWisataId = async() => {
     return `GLR${formattedNumber}`
 }
 
-//AUTOMATIC GENERATE TICKET ID
-const generateTicketId = async (options = {}) => {
-    const lastUser = await TransaksiDetail.findOne({
-        order: [['id_tiket', 'DESC']],
-        lock: true,
-        transaction: options.transaction,
-    })
-
-    let nextIdNumber = 1
-    if (lastUser) {
-        const lastId = lastUser.id_tiket
-        const lastNumber = parseInt(lastId.replace('TKT', ''), 10)
-        nextIdNumber = lastNumber + 1
-    }
-    const formattedNumber = String(nextIdNumber).padStart(4, '0')
-    return `TKT${formattedNumber}`
-}
 module.exports = {
     generateUserId,
     generatePengelolaId,
     generateWisataId,
-    generateGaleriWisataId,
-    generateTicketId
+    generateGaleriWisataId
 }

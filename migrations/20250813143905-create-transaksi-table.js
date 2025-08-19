@@ -1,7 +1,6 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
-//TODO: Ubah data dulu oy belum tepat seperti di ERD draw.io
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable('transaksi', {

@@ -1,5 +1,4 @@
 const {Wisata, Transaksi, GaleriWisata, TransaksiDetail, sequelize} = require('../models')
-const idGenerator = require('../helper/userIdGenerator')
 
 //GET LIST WISATA
 const getListWisata = async (req, res) => {
@@ -81,18 +80,17 @@ const buyTicketWisata = async (req, res) => {
             bukti_pembayaran: buktiBayar
         }, {transaction: t})
 
-        const transaksiDetailsPromises = tiket_details.map(async (detail) => {
-            const tiketId = await idGenerator.generateTicketId({transaction: t})
-            return TransaksiDetail.create({
-                id_tiket: tiketId,
+        const transaksiDetails = []
+        for (const detail of tiket_details) {
+            const newDetail = await TransaksiDetail.create({
                 id_transaksi: transaksi.id_transaksi,
                 gender: detail.gender,
                 umur: detail.umur,
                 harga: detail.harga
             }, {transaction: t})
-        })
+            transaksiDetails.push(newDetail)
+        }
 
-        const transaksiDetails = await Promise.all(transaksiDetailsPromises);
         const jumlahTiket = transaksiDetails.length
         const hargaTiket = wisata.harga_tiket
         transaksi.total_bayar = jumlahTiket * hargaTiket

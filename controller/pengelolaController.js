@@ -98,8 +98,7 @@ const getWisata = async (req, res) => {
     }
 }
 
-//UPDATE WISATA DATA -Images
-//TODO: Ini Belum bisa update gambar
+//UPDATE WISATA DATA
 const updateWisataData = async (req,res) => {
     const body = req.body
     const fileGambar = req.file
