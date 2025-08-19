@@ -34,6 +34,7 @@ const registerWisata = async (req, res) => {
             jam_buka: body.jam_buka,
             jam_tutup: body.jam_tutup,
             jam_terbaik: body.jam_terbaik,
+            hari_operasi: body.hari_operasi,
             coordinates: {
                 type: 'Point',
                 coordinates: [body.longtitude, body.latitude]
@@ -52,20 +53,22 @@ const registerWisata = async (req, res) => {
         
         await GaleriWisata.bulkCreate(galeriData)
 
-        res.json({
+        res.status(200).json({
             message:"Daftar Wisata Berhasil",
             data:wisata, 
             gambar_utama: `${wisataImage.length} gambar utama berhasil ditambahkan`,
             gambar_galeri: `${wisataImages.length} gambar berhasil ditambahkan ke galeri wisata`
         })
     } catch (err) {
-        res.status(500).json({message: err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
 //GET WISATA BERDASARKAN PENGELOLA ID
 const getWisata = async (req, res) => {
     const idUser = req.user.id_user
+    if (!idUser) return res.status(401).json({ message: "Unauthorized!" })
     try {
         const pengelola = await Pengelola.findOne({where: {id_user: idUser}})
         if (!pengelola) {
@@ -94,7 +97,8 @@ const getWisata = async (req, res) => {
             galeri: formattedGaleri
         })
     } catch(err) {
-        res.json({message:err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -126,6 +130,7 @@ const updateWisataData = async (req,res) => {
         if (body.fasilitas) wisata.fasilitas = body.fasilitas
         if (body.asuransi) wisata.asuransi = body.asuransi
         if (body.harga_tiket) wisata.harga_tiket = body.harga_tiket
+        if (body.hari_operasi) wisata.hari_operasi = body.hari_operasi
         if (body.latitude && body.longitude) {
             wisata.coordinates = {
                 type: 'Point',
@@ -138,7 +143,8 @@ const updateWisataData = async (req,res) => {
         await wisata.save()
         res.status(200).json({message: "Data berhasil diupdate", data: wisata})
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -194,12 +200,13 @@ const updateWisataGallery = async (req,res) => {
 
         const updatedGaleri = await GaleriWisata.findAll({where : {id_wisata: wisata.id_wisata}})
 
-        res.json({
+        res.status(200).json({
             message: "Galeri Wisata berhasil di update",
             galeri: updatedGaleri
         })
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -207,9 +214,12 @@ const updateWisataGallery = async (req,res) => {
 //TODO: Belum dicoba checkHistoryTransaction
 const checkHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
+    if (!idUser) {
+        res.status(401).json({ message: "User ID tidak ditemukan" })
+    }
     const roleUser = req.user.role
     if (roleUser !== 'PNGL') {
-        res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
+        res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
     }
     try {
         const pengelola = Pengelola.findOne({where: {id_user: idUser} })
@@ -220,7 +230,8 @@ const checkHistoryTransaction = async (req,res) => {
             transaksi: transaksi
         })
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -228,6 +239,9 @@ const checkHistoryTransaction = async (req,res) => {
 //TODO: Belum dicoba checkDetailHistoryTransaction
 const checkDetailHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
+    if (!idUser) {
+        res.status(401).json({ message: "User ID tidak ditemukan" })
+    }
     const roleUser = req.user.role
     if (roleUser !== 'PNGL') {
         res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
@@ -243,7 +257,8 @@ const checkDetailHistoryTransaction = async (req,res) => {
             detailtransaksi: detailtransaksi
         })
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -270,7 +285,8 @@ const updateStatusTransaction = async (req,res) => {
             transaction: transaction
         })
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 

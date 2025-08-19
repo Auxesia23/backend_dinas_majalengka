@@ -19,7 +19,8 @@ const getListWisata = async (req, res) => {
             data: formattedWisata
         })
     } catch (err) {
-        res.status(500).json({message:err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -38,7 +39,8 @@ const getWisataDetail = async (req, res) => {
             gallery: galeriWisata
         })
     } catch (err) {
-        res.status(500).json({message:err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 

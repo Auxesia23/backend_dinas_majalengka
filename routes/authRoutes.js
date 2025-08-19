@@ -26,6 +26,6 @@ router.post('/login', authController.login)
 router.post('/forgot-password', authController.forgotPassword)
 router.post('/reset-password', authController.resetPassword)
 
-router.post('/register-pengelola', cpUpload, authController.register_pengelola)
+router.post('/register-pengelola', cpUpload, authController.registerPengelola)
 
 module.exports = router

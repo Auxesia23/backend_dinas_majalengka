@@ -14,6 +14,9 @@ const register = async(req, res) => {
     const body = req.body
     
     const hashedPassword = await bcrypt.hash(body.password_hash, 10);
+    if (!hashedPassword) {
+        res.status(400).json({message: "Please enter a password!"})
+    }
     try {
         const newUserId = await idGenerator.generateUserId()
         const user = await User.create({ 
@@ -26,15 +29,16 @@ const register = async(req, res) => {
             gender:body.gender,
             password_hash:hashedPassword
         })
-        res.json({ message: "Register berhasil", table_user: user});
+        res.status(200).json({ message: "Register berhasil", table_user: user});
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
 //PENGELOLA
 //REGISTER
-const register_pengelola = async (req,res) => {
+const registerPengelola = async (req,res) => {
     const body = req.body
     const hashedPassword = await bcrypt.hash(body.password_hash, 10)
     try {
@@ -68,9 +72,10 @@ const register_pengelola = async (req,res) => {
             url_nib:nibUrl,
             qr_code:qrCodeUrl
         })
-        res.json({message:"Register Pengelola Berhasi;", user: user, pengelola: pengelola})
+        res.status(200).json({message:"Register Pengelola Berhasi;", user: user, pengelola: pengelola})
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -95,9 +100,10 @@ const login = async(req, res) => {
 
         const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1h" });
     
-        res.json({ message: "Login berhasil", token });
+        res.status(200).json({ message: "Login berhasil", token });
     } catch(err) {
-        res.status(500).json({message: err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -154,7 +160,7 @@ const resetPassword = async(req,res) => {
         await user.save()
         res.status(200).json({message:"Password has been reset successfully"})
     } catch (err) {
-        console.log(err)
+        console.error(err)
         res.status(500).json({message:"Server Error"})
     }
 }
@@ -165,5 +171,5 @@ module.exports = {
     login,
     forgotPassword,
     resetPassword,
-    register_pengelola
+    registerPengelola
 }

@@ -10,7 +10,7 @@ module.exports = {
         const pengelolas = [];
         const wisatas = [];
 
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= 30; i++) {
             const userId = `USR${String(i).padStart(4, '0')}`;
             const pengelolaId = `PNGL${String(i).padStart(4, '0')}`;
             const wisataId = `WST${String(i).padStart(4, '0')}`;
@@ -48,6 +48,7 @@ module.exports = {
                 jam_buka: '08:00:00',
                 jam_tutup: '17:00:00',
                 jam_terbaik: '10:00:00',
+                hari_operasi: JSON.stringify(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat']),
                 coordinates: Sequelize.fn('ST_GeomFromText', 'POINT(-6.8834 108.2235)'),
                 fasilitas: JSON.stringify(['Toilet', 'Parkir', 'Mushola']),
                 asuransi: true,

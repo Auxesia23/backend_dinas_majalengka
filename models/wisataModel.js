@@ -45,6 +45,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TIME,
             allowNull:false
         },
+        hari_operasi: {
+            type: DataTypes.JSON,
+            allowNull:true
+        },
         coordinates:{
             type: DataTypes.GEOMETRY('POINT'),
             allowNull:false

@@ -5,12 +5,13 @@ const getProtected = async(req, res) => {
     try {
         const id_user = req.user.id_user
         const data = await User.findOne({where: {id_user: id_user}})
-        res.json({
+        res.status(200).json({
             message:"Your data",
             data: data
         })
     } catch(err) {
-        res.json({message:err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
@@ -26,7 +27,8 @@ const getAllUser = async(req,res) => {
             data: user
         })
     } catch (err) {
-        res.json({message:err.message})
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
     }
 }
 
