@@ -88,7 +88,6 @@ const getQrCodeWisata = async (req, res) => {
 }
 
 //BELI TIKET
-//TODO: Belum di cek fungsi nya + belum for each untuk transaksi detail
 const buyTicketWisata = async (req, res) => {
     const { body, file, params, user } = req;
     const { id: wisataId } = params
@@ -140,6 +139,8 @@ const buyTicketWisata = async (req, res) => {
         const hargaTiket = wisata.harga_tiket
         transaksi.total_bayar = jumlahTiket * hargaTiket
         transaksi.jumlah_tiket = jumlahTiket
+
+        await transaksi.save({transaction: t})
 
         await t.commit()
 

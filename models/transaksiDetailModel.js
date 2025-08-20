@@ -35,6 +35,16 @@ module.exports = (sequelize, DataTypes) => {
         harga:{
             type: DataTypes.FLOAT,
             allowNull:false
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.literal("CURRENT_TIMESTAMP")
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.literal("CURRENT_TIMESTAMP")
         }
     }, {
         sequelize,

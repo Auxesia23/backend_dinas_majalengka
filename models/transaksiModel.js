@@ -59,6 +59,16 @@ module.exports = (sequelize, DataTypes) => {
         jumlah_tiket: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.literal("CURRENT_TIMESTAMP")
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.literal("CURRENT_TIMESTAMP")
         }
     }, {
         sequelize,

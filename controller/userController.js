@@ -1,4 +1,5 @@
-const { User, Wisata } = require('../models')
+const { User, Wisata, Transaksi, TransaksiDetail} = require('../models')
+const {Transaction} = require("sequelize");
 
 //PROTECTED
 const getProtected = async(req, res) => {
@@ -32,8 +33,52 @@ const getAllUser = async(req,res) => {
     }
 }
 
+//GET History ALL Transaction for USER Specific
+const getHistoryTransactions = async(req, res) => {
+    const idUser = req.user.id_user
+    if (!idUser) {
+        return res.status(403).json({message:"User not found"})
+    }
+    try {
+        const transactions = await Transaksi.findAll({where: {id_user: idUser}})
+        res.status(200).json({
+            message:"Berhasil mengambil data histori transaksi",
+            transactions: transactions
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
+    }
+}
+
+//GET Detail History Specific
+const getDetailTransactions = async(req,res) => {
+    const idUser = req.user.id_user
+    const idTransaksi = req.params.id
+    const idRole = req.user.id_role
+    if (!idUser) {
+        return res.status(403).json({message:"User not found"})
+    }
+    if (idRole !== 'USR') {
+        return res.status(401).json({message:"You are not User"})
+    }
+    try {
+        const transaksi = await Transaksi.findOne({where: {id_transaksi: idTransaksi}})
+        const detailTransaksi = await TransaksiDetail.findAll({where: {id_transaksi: idTransaksi}})
+        res.status(200).json({
+            message:"Berhasil mengambil detail",
+            transaksi: transaksi,
+            detailTransaksi: detailTransaksi
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
+    }
+}
 
 module.exports = {
     getProtected,
-    getAllUser
+    getAllUser,
+    getHistoryTransactions,
+    getDetailTransactions,
 }

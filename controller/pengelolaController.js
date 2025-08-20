@@ -225,9 +225,12 @@ const checkHistoryTransaction = async (req,res) => {
         res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
     }
     try {
-        const pengelola = Pengelola.findOne({where: {id_user: idUser} })
-        const wisata = Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
-        const transaksi = Transaksi.findAll({where: {id_wisata: wisata.id_wisata}})
+        const pengelola = await Pengelola.findOne({where: {id_user: idUser} })
+        const wisata = await Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
+        const transaksi = await Transaksi.findAll({
+            where: {id_wisata: wisata.id_wisata},
+            order: ['createdAt', 'DESC']
+        })
         res.status(200).json({
             message: "Data Transaksi berhasil didapatkan",
             transaksi: transaksi
@@ -249,11 +252,10 @@ const checkDetailHistoryTransaction = async (req,res) => {
     if (roleUser !== 'PNGL') {
         res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
     }
+    const transaksiId = req.params.id
     try {
-        const pengelola = Pengelola.findOne({where: {id_user: idUser} })
-        const wisata = Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
-        const transaksi = Transaksi.findAll({where: {id_wisata: wisata.id_wisata}})
-        const detailtransaksi = TransaksiDetail.findAll({where: {id_transaksi: transaksi.id_transaksi}})
+        const transaksi = await Transaksi.findOne({where: {id_transaksi: transaksiId}})
+        const detailtransaksi = await TransaksiDetail.findAll({where: {id_transaksi: transaksiId}})
         res.status(200).json({
             message: "Data Transaksi berhasil didapatkan",
             transaksi: transaksi,
@@ -283,6 +285,7 @@ const updateStatusTransaction = async (req,res) => {
         if (status) {
             transaction.status = status
         }
+        await transaction.save()
         res.status(200).json({
             message:`Status transaksi ke-${idTransaction} berhasil diubah`,
             transaction: transaction

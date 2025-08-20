@@ -10,7 +10,7 @@ module.exports = {
         const pengelolas = [];
         const wisatas = [];
 
-        for (let i = 1; i <= 30; i++) {
+        for (let i = 1; i <= 50; i++) {
             const userId = `USR${String(i).padStart(4, '0')}`;
             const pengelolaId = `PNGL${String(i).padStart(4, '0')}`;
             const wisataId = `WST${String(i).padStart(4, '0')}`;
