@@ -17,6 +17,7 @@ const upload = multer({ storage: storage })
 
 router.get('/', wisataController.getListWisata)
 router.get('/:id', wisataController.getWisataDetail)
+router.get('/showQrCode/:id', verifyToken, wisataController.getQrCodeWisata)
 router.post('/beli-tiket/:id',
     verifyToken,
     upload.single('buktibayar'),

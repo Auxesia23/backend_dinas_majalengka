@@ -76,6 +76,9 @@ const getWisata = async (req, res) => {
         }
         const wisata = await Wisata.findOne({where:{id_pengelola: pengelola.id_pengelola}})
         const galeriWisata = await GaleriWisata.findAll({where: {id_wisata:wisata.id_wisata}})
+        if (!wisata || !galeriWisata) {
+            return res.status(200).json({message: "Belum ada wisata maupun galeri"})
+        }
 
         const baseURL = `${req.protocol}://${req.get('host')}`
 
@@ -217,7 +220,7 @@ const checkHistoryTransaction = async (req,res) => {
     if (!idUser) {
         res.status(401).json({ message: "User ID tidak ditemukan" })
     }
-    const roleUser = req.user.role
+    const roleUser = req.user.id_role
     if (roleUser !== 'PNGL') {
         res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
     }
@@ -242,7 +245,7 @@ const checkDetailHistoryTransaction = async (req,res) => {
     if (!idUser) {
         res.status(401).json({ message: "User ID tidak ditemukan" })
     }
-    const roleUser = req.user.role
+    const roleUser = req.user.id_role
     if (roleUser !== 'PNGL') {
         res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
     }

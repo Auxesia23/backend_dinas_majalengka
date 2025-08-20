@@ -15,9 +15,7 @@ app.use(bodyParser.json())
 app.use(cors())
 
 app.get('/', (req,res) => {
-    res.json({
-        message:'Berhasil'
-    })
+    res.json({message:'Berhasil'})
 })
 
 //AUTH
@@ -31,21 +29,6 @@ app.use('/pengelola', pengelolaRoutes)
 
 //WISATA
 app.use('/wisata', wisataRoutes)
-
-//INTENT TO GOOGLE MAP
-app.post('/get', (req,res) => {
-    const body = req.body
-    if (!body.alamat) {
-        return res.status(400).json({
-            message:"Tolong map nya diisi"
-        })
-    }
-    const formattedAlamat = encodeURIComponent(body.alamat)
-    const googleMapsUrl = `http://maps.google.com/maps?q=${formattedAlamat}`
-    res.json({
-        maps:googleMapsUrl
-    })
-})
 
 app.listen(port, () => {
     console.log(`App listening on ${port} you can go to http://localhost:${port}`)

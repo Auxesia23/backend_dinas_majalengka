@@ -81,16 +81,16 @@ const registerPengelola = async (req,res) => {
 
 //LOGIN
 const login = async(req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body
     
     try {
         const user = await User.findOne({ 
             where: { email }
-        });
-        if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+        })
+        if (!user) return res.status(404).json({ message: "User tidak ditemukan" })
     
-        const validPassword = await bcrypt.compare(password, user.password_hash);
-        if (!validPassword) return res.status(401).json({ message: "Password salah" });
+        const validPassword = await bcrypt.compare(password, user.password_hash)
+        if (!validPassword) return res.status(401).json({ message: "Password salah" })
     
         const payload = {
             id_user: user.id_user,
@@ -98,9 +98,8 @@ const login = async(req, res) => {
             nama_lengkap: user.nama_lengkap,
         }
 
-        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1h" });
-    
-        res.status(200).json({ message: "Login berhasil", token });
+        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1h" })
+        res.status(200).json({ message: "Login berhasil", token })
     } catch(err) {
         console.error(err)
         res.status(500).json({ message: "Server Error" })

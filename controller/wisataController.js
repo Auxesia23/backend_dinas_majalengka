@@ -1,4 +1,4 @@
-const {Wisata, Transaksi, GaleriWisata, TransaksiDetail, sequelize} = require('../models')
+const {Wisata, Transaksi, GaleriWisata, TransaksiDetail, sequelize, Pengelola} = require('../models')
 
 //GET LIST WISATA
 const getListWisata = async (req, res) => {
@@ -32,11 +32,54 @@ const getWisataDetail = async (req, res) => {
         if (!wisata) {
             res.status(404).json({message:"Wisata no existe"})
         }
+        const pengelola = await Pengelola.findOne({where: {id_pengelola: wisata.id_pengelola}})
+        if (!pengelola) {
+            res.status(404).json({message:"Pengelola no existed"})
+        }
+        const baseURL = `${req.protocol}://${req.get('host')}`
+        const  formattedPengelola = {
+            ...pengelola.toJSON(),
+            qr_code: `${baseURL}/${pengelola.qr_code.replace(/\\/g, '/').replace('public/', '')}`,
+        }
         const galeriWisata = await GaleriWisata.findAll({where : {id_wisata: id}})
         res.status(200).json({
             message:"Data wisata berhasil diambil",
             data: wisata,
+            qr_code: formattedPengelola.qr_code,
             gallery: galeriWisata
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error" })
+    }
+}
+
+//SHOW QR CODE FROM PENGELOLA
+const getQrCodeWisata = async (req, res) => {
+    const wisataId = req.params.id
+    if (!wisataId) {
+        res.status(404).json({message:"Wisata no existed"})
+    }
+    if (req.user.id_role !== 'USR') {
+        res.status(401).json({message:"Anda harus seorang user!"})
+    }
+    try {
+        const wisata = await Wisata.findOne({where: {id_wisata: wisataId}})
+        if (!wisata) {
+            res.status(404).json({message:"Wisata no existed"})
+        }
+        const pengelola = await Pengelola.findOne({where: {id_pengelola: wisata.id_pengelola}})
+        if (!pengelola) {
+            res.status(404).json({message:"Pengelola no existed"})
+        }
+        const baseURL = `${req.protocol}://${req.get('host')}`
+        const  formattedPengelola = {
+            ...pengelola.toJSON(),
+            qr_code: `${baseURL}/${pengelola.qr_code.replace(/\\/g, '/').replace('public/', '')}`,
+        }
+        res.status(200).json({
+            message:"Qr code berhasil diambil dari pengelola",
+            qr_code: formattedPengelola.qr_code,
         })
     } catch (err) {
         console.error(err)
@@ -116,5 +159,6 @@ const buyTicketWisata = async (req, res) => {
 module.exports = {
     getListWisata,
     getWisataDetail,
-    buyTicketWisata
+    buyTicketWisata,
+    getQrCodeWisata
 }
