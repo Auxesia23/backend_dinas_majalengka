@@ -37,11 +37,15 @@ const getWisataDetail = async (req, res) => {
             res.status(404).json({message:"Pengelola no existed"})
         }
         const baseURL = `${req.protocol}://${req.get('host')}`
-        const  formattedPengelola = {
+        const formattedPengelola = {
             ...pengelola.toJSON(),
             qr_code: `${baseURL}/${pengelola.qr_code.replace(/\\/g, '/').replace('public/', '')}`,
         }
         const galeriWisata = await GaleriWisata.findAll({where : {id_wisata: id}})
+        const formattedGaleriWisata = {
+            ...galeriWisata.toJSON(),
+            url_gambar: `${baseURL}/${galeriWisata.url_gambar.replace(/\\/g, '/').replace('public/', '')}`
+        }
         res.status(200).json({
             message:"Data wisata berhasil diambil",
             data: wisata,

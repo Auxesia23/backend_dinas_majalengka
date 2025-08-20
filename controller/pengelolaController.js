@@ -1,4 +1,4 @@
-const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail} = require('../models')
+const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail, User} = require('../models')
 const idGenerator = require('../helper/userIdGenerator')
 const path = require('path')
 const fs = require("node:fs");
@@ -229,7 +229,13 @@ const checkHistoryTransaction = async (req,res) => {
         const wisata = await Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
         const transaksi = await Transaksi.findAll({
             where: {id_wisata: wisata.id_wisata},
-            order: ['createdAt', 'DESC']
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            include: [{
+                model: User,
+                attributes: ['nama_lengkap', 'email']
+            }]
         })
         res.status(200).json({
             message: "Data Transaksi berhasil didapatkan",
@@ -254,7 +260,16 @@ const checkDetailHistoryTransaction = async (req,res) => {
     }
     const transaksiId = req.params.id
     try {
-        const transaksi = await Transaksi.findOne({where: {id_transaksi: transaksiId}})
+        const transaksi = await Transaksi.findOne({
+            where: {id_transaksi: transaksiId},
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            include: [{
+                model: User,
+                attributes: ['nama_lengkap', 'email']
+            }]
+        })
         const detailtransaksi = await TransaksiDetail.findAll({where: {id_transaksi: transaksiId}})
         res.status(200).json({
             message: "Data Transaksi berhasil didapatkan",

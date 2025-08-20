@@ -40,7 +40,14 @@ const getHistoryTransactions = async(req, res) => {
         return res.status(403).json({message:"User not found"})
     }
     try {
-        const transactions = await Transaksi.findAll({where: {id_user: idUser}})
+        const transactions = await Transaksi.findAll({
+            where: {id_user: idUser},
+            order: [['createdAt', 'DESC']],
+            include: [{
+                model: User,
+                attributes: ['nama_lengkap', 'email']
+            }]
+        })
         res.status(200).json({
             message:"Berhasil mengambil data histori transaksi",
             transactions: transactions
@@ -63,7 +70,16 @@ const getDetailTransactions = async(req,res) => {
         return res.status(401).json({message:"You are not User"})
     }
     try {
-        const transaksi = await Transaksi.findOne({where: {id_transaksi: idTransaksi}})
+        const transaksi = await Transaksi.findOne({
+            where: {id_transaksi: idTransaksi},
+            order: [
+                ['createdAt', 'DESC']
+            ],
+            include: [{
+                model: User,
+                attributes: ['nama_lengkap', 'email']
+            }]
+        })
         const detailTransaksi = await TransaksiDetail.findAll({where: {id_transaksi: idTransaksi}})
         res.status(200).json({
             message:"Berhasil mengambil detail",
