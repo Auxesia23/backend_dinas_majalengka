@@ -25,6 +25,10 @@ module.exports = {
                 type: Sequelize.STRING,
                 allowNull: false
             },
+            deskripsi: {
+                type: Sequelize.TEXT,
+                allowNull: false
+            },
             lokasi: {
                 type: Sequelize.STRING,
                 allowNull: false
