@@ -214,7 +214,6 @@ const updateWisataGallery = async (req,res) => {
 }
 
 //CHECK HISTORY TRANSAKSI BERDASARKAN WISATA SI PENGELOLA
-//TODO: Belum dicoba checkHistoryTransaction
 const checkHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
     if (!idUser) {
@@ -248,7 +247,6 @@ const checkHistoryTransaction = async (req,res) => {
 }
 
 //GET DETAIL TRANSACTION
-//TODO: Belum dicoba checkDetailHistoryTransaction
 const checkDetailHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
     if (!idUser) {
@@ -283,7 +281,6 @@ const checkDetailHistoryTransaction = async (req,res) => {
 }
 
 //ENDPOINT UBAH STATUS TRANSAKSI
-//TODO: Belum dicoba updateStatusTransaction
 const updateStatusTransaction = async (req,res) => {
     const idTransaction = req.params.id
     const status = req.body.status

@@ -5,8 +5,6 @@ const verifyToken = require('../middleware/authMiddleware')
 
 router.get('/info', verifyToken, userController.getProtected)
 router.get('/getAllUser', verifyToken, userController.getAllUser)
-
-//TODO: getHistoryTransactions getDetailTransactions/:id belum dicoba
 router.get('/getHistoryTransactions', verifyToken, userController.getHistoryTransactions)
 router.get('/getDetailTransactions/:id', verifyToken, userController.getDetailTransactions)
 

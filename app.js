@@ -30,6 +30,8 @@ app.use('/pengelola', pengelolaRoutes)
 //WISATA
 app.use('/wisata', wisataRoutes)
 
+//TODO: BUAT ROUTE UNTUK DINAS
+
 app.listen(port, () => {
     console.log(`App listening on ${port} you can go to http://localhost:${port}`)
 })
