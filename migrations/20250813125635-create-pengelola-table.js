@@ -40,6 +40,15 @@ module.exports = {
                 type: Sequelize.STRING,
                 allowNull: false
             },
+            is_approved: {
+                type: Sequelize.ENUM(
+                    'Pending',
+                    'Disetujui',
+                    'Ditolak'
+                ),
+                defaultValue: 'Pending',
+                allowNull: false
+            },
             createdAt: {
                 type: Sequelize.DATE,
                 allowNull: false,

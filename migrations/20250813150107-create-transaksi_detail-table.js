@@ -26,7 +26,13 @@ module.exports = {
                 allowNull: false
             },
             umur: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.ENUM(
+                    'Balita',
+                    'Anak-anak',
+                    'Remaja',
+                    'Dewasa',
+                    'Lansia'
+                ),
                 allowNull: false
             },
             harga: {

@@ -49,8 +49,8 @@ module.exports = {
                 type: Sequelize.JSON,
                 allowNull: true
             },
-            coordinates: {
-                type: Sequelize.GEOMETRY('POINT'),
+            locationGoogleMaps: {
+                type: Sequelize.STRING,
                 allowNull: false
             },
             fasilitas: {
@@ -68,6 +68,10 @@ module.exports = {
             url_gambar_utama: {
                 type: Sequelize.STRING,
                 allowNull: false
+            },
+            averageRating: {
+                type: Sequelize.FLOAT,
+                allowNull: true
             },
             createdAt: {
                 type: Sequelize.DATE,

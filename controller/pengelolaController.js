@@ -30,15 +30,13 @@ const registerWisata = async (req, res) => {
             id_wisata:newWisataId,
             id_pengelola: pengelola.id_pengelola,
             nama_wisata: body.nama_wisata,
+            deskripsi: body.deskripsi,
             lokasi: body.lokasi,
             jam_buka: body.jam_buka,
             jam_tutup: body.jam_tutup,
             jam_terbaik: body.jam_terbaik,
             hari_operasi: body.hari_operasi,
-            coordinates: {
-                type: 'Point',
-                coordinates: [body.longtitude, body.latitude]
-            },
+            locationGoogleMaps: body.locationGoogleMaps,
             fasilitas: body.fasilitas,
             asuransi: body.asuransi,
             harga_tiket: body.harga_tiket,
@@ -134,12 +132,7 @@ const updateWisataData = async (req,res) => {
         if (body.asuransi) wisata.asuransi = body.asuransi
         if (body.harga_tiket) wisata.harga_tiket = body.harga_tiket
         if (body.hari_operasi) wisata.hari_operasi = body.hari_operasi
-        if (body.latitude && body.longitude) {
-            wisata.coordinates = {
-                type: 'Point',
-                coordinates: [body.longitude, body.latitude]
-            }
-        }
+        if (body.locationGoogleMaps) wisata.locationGoogleMaps = body.locationGoogleMaps
         console.log(fileGambar)
         if (fileGambar) wisata.url_gambar_utama = fileGambar.path
 
@@ -217,11 +210,11 @@ const updateWisataGallery = async (req,res) => {
 const checkHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
     if (!idUser) {
-        res.status(401).json({ message: "User ID tidak ditemukan" })
+        return res.status(401).json({ message: "User ID tidak ditemukan" })
     }
     const roleUser = req.user.id_role
     if (roleUser !== 'PNGL') {
-        res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
+        return res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
     }
     try {
         const pengelola = await Pengelola.findOne({where: {id_user: idUser} })
@@ -250,11 +243,11 @@ const checkHistoryTransaction = async (req,res) => {
 const checkDetailHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
     if (!idUser) {
-        res.status(401).json({ message: "User ID tidak ditemukan" })
+        return res.status(401).json({ message: "User ID tidak ditemukan" })
     }
     const roleUser = req.user.id_role
     if (roleUser !== 'PNGL') {
-        res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
+        return res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
     }
     const transaksiId = req.params.id
     try {
@@ -285,10 +278,10 @@ const updateStatusTransaction = async (req,res) => {
     const idTransaction = req.params.id
     const status = req.body.status
     if (!idTransaction) {
-        res.status(400).message({message:"ID Transaksi tidak ada"})
+        return res.status(400).message({message:"ID Transaksi tidak ada"})
     }
     if (!status) {
-        res.status(400).message({message:"Status tidak ada"})
+        return res.status(400).message({message:"Status tidak ada"})
     }
     try {
         const transaction = await Transaksi.findOne({

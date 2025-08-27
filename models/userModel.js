@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     class User extends Model {
         static associate(models) {
             this.belongsTo(models.Role, {foreignKey:'id_role'})
+            this.belongsTo(models.Rating, {foreignKey:'id_user'})
             this.hasOne(models.Pengelola, {foreignKey:'id_user'})
             this.hasMany(models.Transaksi, {foreignKey:'id_user'})
         }

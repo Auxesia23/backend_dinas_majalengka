@@ -23,5 +23,12 @@ router.post('/beli-tiket/:id',
     upload.single('buktibayar'),
     wisataController.buyTicketWisata
 )
+router.post('/buyTicketBundle/:id',
+    verifyToken,
+    upload.single('buktibayar'),
+    wisataController.buyTicketBundle
+)
+
+router.post('/addRating/:id', verifyToken, wisataController.addRating)
 
 module.exports = router
