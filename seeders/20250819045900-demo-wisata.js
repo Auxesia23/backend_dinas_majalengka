@@ -87,7 +87,7 @@ module.exports = {
             id_user: 'USR0101',
             id_role: 'DNS',
             nama_lengkap: `Dinas Pariwisata Majalengka`,
-            email: `dinas@gmail.com`,
+            email: `majalengka.dinas@gmail.com`,
             tanggal_lahir: new Date(),
             no_telpon: `081234567890`,
             gender: `Laki-Laki`,

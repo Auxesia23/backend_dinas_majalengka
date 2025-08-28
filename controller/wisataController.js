@@ -1,4 +1,4 @@
-const {Wisata, Transaksi, GaleriWisata, TransaksiDetail, sequelize, Pengelola, Rating} = require('../models')
+const {Wisata, Transaksi, GaleriWisata, TransaksiDetail, sequelize, Pengelola, Rating, User} = require('../models')
 
 //GET LIST WISATA
 const getListWisata = async (req, res) => {
@@ -50,11 +50,19 @@ const getWisataDetail = async (req, res) => {
             ...galeri.toJSON(),
             url_gambar: `${baseURL}/${galeri.url_gambar.replace(/\\/g, '/').replace('public/', '')}`
         }))
+        const ratings = await Rating.findAll({
+            where: {wisataId: id},
+            include: [{
+                model: User,
+                attributes: ['nama_lengkap']
+            }]
+        })
         res.status(200).json({
             message:"Data wisata berhasil diambil",
             data: formattedWisata,
             qr_code: formattedPengelola.qr_code,
-            gallery: formattedGaleriWisata
+            gallery: formattedGaleriWisata,
+            ratings: ratings
         })
     } catch (err) {
         console.error(err)
@@ -254,7 +262,7 @@ const buyTicketBundle = async (req, res) => {
     }
 }
 
-const addRating = async (req, res) => { //TODO: Tolong di cek ini belumm di postman
+const addRating = async (req, res) => {
     const idWisata = req.params.id
     const rating = req.body.rating
     const comment = req.body.comment
@@ -273,7 +281,17 @@ const addRating = async (req, res) => { //TODO: Tolong di cek ini belumm di post
         return res.status(400).json({ message: "Mohon isi comment dengan benar!" })
     }
     try {
-        const existingRating = await Rating.find({
+        const hasPurchasedTicket = await Transaksi.findOne({
+            where: {
+                id_user: idUser,
+                id_wisata: idWisata,
+                status: 'Terkonfirmasi',
+            }
+        })
+        if (!hasPurchasedTicket) {
+            return res.status(403).json({ message: "Anda harus membeli tiket wisata ini terlebih dahulu sebelum memberikan rating." })
+        }
+        const existingRating = await Rating.findOne({
             where: {wisataId: idWisata, userId: idUser}
         })
         if (existingRating) {

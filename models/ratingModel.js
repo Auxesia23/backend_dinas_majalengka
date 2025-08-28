@@ -3,8 +3,8 @@ const { Model } = require('sequelize')
 module.exports = (sequelize, DataTypes) => {
     class Rating extends Model {
         static associate(models) {
-            this.hasMany(models.Wisata, {foreignKey:'id_wisata'})
-            this.hasMany(models.User, {foreignKey:'id_user'})
+            this.belongsTo(models.Wisata, {foreignKey:'wisataId'})
+            this.belongsTo(models.User, {foreignKey:'userId'})
         }
     }
     Rating.init({
