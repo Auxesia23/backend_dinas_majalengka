@@ -1,4 +1,4 @@
-const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail, User} = require('../models')
+const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail, User, sequelize} = require('../models')
 const idGenerator = require('../helper/userIdGenerator')
 const path = require('path')
 const fs = require("node:fs");
@@ -301,6 +301,81 @@ const updateStatusTransaction = async (req,res) => {
     }
 }
 
+//GET TOTAL PENJUALAN
+const getTotalPenjualan = async (req, res) => {
+    const idRole = req.user.id_role
+    const idUser = req.user.id_user
+    try {
+        if (idRole !== 'PNGL') {
+            return res.status(403).json({message:"Anda bukan pengelola"})
+        }
+        const pengelola = await Pengelola.findOne({where: {id_user: idUser}})
+        if (!pengelola) {
+            return res.status(400).json({message:"Data pengelola tidak ditemukan"})
+        }
+        const wisata = await Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
+        if (!wisata) {
+            return res.status(400).json({message:"Data Wisata tidak ditemukan"})
+        }
+
+        const result = await Transaksi.findOne({
+            attributes: [
+                [sequelize.fn('sum', sequelize.col('total_bayar')), 'total_penjualan']
+            ],
+            where: {
+                id_wisata: wisata.id_wisata,
+                status: 'Terkonfirmasi'
+            }
+        })
+
+        const totalPenjualan = result.dataValues.total_penjualan || 0
+        res.status(200).json({
+            message:`Total penjualan berhasil didapatkan`,
+            totalPenjualan: totalPenjualan
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+const getTotalVisitor = async (req, res) => {
+    const idRole = req.user.id_role
+    const idUser = req.user.id_user
+    try {
+        if (idRole !== 'PNGL') {
+            return res.status(403).json({message:"Anda bukan pengelola"})
+        }
+        const pengelola = await Pengelola.findOne({where: {id_user: idUser}})
+        if (!pengelola) {
+            return res.status(400).json({message:"Data pengelola tidak ditemukan"})
+        }
+        const wisata = await Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
+        if (!wisata) {
+            return res.status(400).json({message:"Data Wisata tidak ditemukan"})
+        }
+
+        const result = await Transaksi.findOne({
+            attributes: [
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'total_pengunjung'],
+            ],
+            where: {
+                id_wisata: wisata.id_wisata,
+                status: 'Terkonfirmasi'
+            }
+        })
+
+        const totalPengunjung = result.dataValues.total_pengunjung || 0
+        res.status(200).json({
+            message:`Total pengunjung berhasil didapatkan`,
+            totalPengunjung: totalPengunjung
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({message:"Server Error", error: err.message})
+    }
+}
+
 module.exports = {
     registerWisata,
     getWisata,
@@ -308,5 +383,7 @@ module.exports = {
     updateWisataGallery,
     checkHistoryTransaction,
     checkDetailHistoryTransaction,
-    updateStatusTransaction
+    updateStatusTransaction,
+    getTotalPenjualan,
+    getTotalVisitor,
 }

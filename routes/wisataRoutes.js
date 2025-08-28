@@ -15,8 +15,9 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage })
 
-router.get('/', wisataController.getListWisata)
+router.get('/getMostPopularByTickets', wisataController.getMostPopularByTickets)
 router.get('/:id', wisataController.getWisataDetail)
+router.get('/', wisataController.getListWisata)
 router.get('/showQrCode/:id', verifyToken, wisataController.getQrCodeWisata)
 router.post('/beli-tiket/:id',
     verifyToken,

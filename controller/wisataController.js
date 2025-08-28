@@ -24,6 +24,52 @@ const getListWisata = async (req, res) => {
     }
 }
 
+//GET MOST POPULAR WISATA BY TICKETS
+const getMostPopularByTickets = async (req, res) => {
+    try {
+        const popularWisata = await Transaksi.findAll({
+            attributes: [
+                'id_wisata',
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'total_tickets']
+            ],
+            group: ['id_wisata'],
+            order: [[sequelize.literal('total_tickets'), 'DESC']],
+            limit: 1
+        })
+        if (popularWisata.length === 0) {
+            return res.status(404).json({ message: "Tidak ada data transaksi yang ditemukan"})
+        }
+        const idWisata = popularWisata[0].id_wisata
+        const wisata = await Wisata.findOne({
+            where: {id_wisata: idWisata}
+        })
+        if (!wisata) {
+            return res.status(404).json({ message: "Wisata tidak ditemukan" })
+        }
+        const galeriWisata = await GaleriWisata.findAll({
+            where: {id_wisata: idWisata}
+        })
+        const baseURL = `${req.protocol}://${req.get('host')}`
+        const formatedWisata = {
+            ...wisata.toJSON(),
+            url_gambar_utama: `${baseURL}/${wisata.url_gambar_utama.replace(/\\/g, '/').replace('public/', '')}`
+        }
+        const formattedGaleriWisata = galeriWisata.map(galeri => ({
+            ...galeri.toJSON(),
+            url_gambar: `${baseURL}/${galeri.url_gambar.replace(/\\/g, '/').replace('public/', '')}`
+        }))
+
+        res.status(200).json({
+            message: `Wisata paling populer berdasarkan jumlah tiket (${popularWisata[0].dataValues.total_tickets} tiket) berhasil diambil.`,
+            data: formatedWisata,
+            gallery: formattedGaleriWisata
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
 //GET WISATA BERDASARKAN ID WISATA
 const getWisataDetail = async (req, res) => {
     const id = req.params.id
@@ -323,6 +369,7 @@ const addRating = async (req, res) => {
 
 module.exports = {
     getListWisata,
+    getMostPopularByTickets,
     getWisataDetail,
     buyTicketWisata,
     getQrCodeWisata,
