@@ -124,6 +124,7 @@ const updateWisataData = async (req,res) => {
         }
 
         if (body.nama_wisata) wisata.nama_wisata = body.nama_wisata
+        if (body.deskripsi) wisata.deskripsi = body.deskripsi
         if (body.lokasi) wisata.lokasi = body.lokasi
         if (body.jam_buka) wisata.jam_buka = body.jam_buka
         if (body.jam_tutup) wisata.jam_tutup = body.jam_tutup
@@ -135,6 +136,7 @@ const updateWisataData = async (req,res) => {
         if (body.locationGoogleMaps) wisata.locationGoogleMaps = body.locationGoogleMaps
         console.log(fileGambar)
         if (fileGambar) wisata.url_gambar_utama = fileGambar.path
+
 
         await wisata.save()
         res.status(200).json({message: "Data berhasil diupdate", data: wisata})

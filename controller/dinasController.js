@@ -1,4 +1,4 @@
-const {Pengelola, User, MessageApprovement} = require('../models')
+const {Pengelola, User, MessageApprovement, Transaksi, sequelize, Wisata} = require('../models')
 const transporter = require('../helper/email')
 
 //GET ALL PENGELOLA
@@ -141,8 +141,140 @@ const approvePengelola = async (req,res) => {
     }
 }
 
+//GET ALL WISATA TOTAL
+const getTotalWisata = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {
+        return res.status(403).json({ message: "Anda bukan Dinas" })
+    }
+    try {
+        const totalWisata = await Wisata.count()
+        res.status(200).json({
+            message: "Total jumlah wisata berhasil diambil!",
+            totalWisata: totalWisata
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+//GET ALL ACCOUNT OF WISATA
+const getApprovedPengelolaCount = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {
+        return res.status(403).json({ message: "Anda bukan Dinas" })
+    }
+    try {
+        const approvedPengelola = await Pengelola.count({
+            where: { is_approved: 'Disetujui' },
+        })
+        res.status(200).json({
+            message: "Jumlah pengelola yang disetujui berhasil didapatkan!",
+            approvedPengelolaCount: approvedPengelola
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+//GET TOTAL PENGUNJUNG ALL WISATA
+const getTotalVisitor = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {
+        return res.status(403).json({ message: "Anda bukan Dinas" })
+    }
+    try {
+        const result = await Transaksi.findOne({
+            attributes: [
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'total_pengunjung'],
+            ],
+            where: { status: 'Terkonfirmasi' }
+        })
+        const totalVisitor = result.dataValues.total_pengunjung || 0
+        res.status(200).json({
+            message: "Total pengunjung dari semua wisata berhasil didapatkan!",
+            totalVisitors: totalVisitor
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+//GET TOTAL MONEY BY ALL WISATA
+const getTotalRevenue = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {
+        return res.status(403).json({ message: "Anda bukan Dinas harap kembali!" })
+    }
+    try {
+        const result = await Transaksi.findOne({
+            attributes: [
+                [sequelize.fn('sum', sequelize.col('total_bayar')), 'total_revenue']
+            ],
+            where: { status: 'Terkonfirmasi' }
+        })
+        const totalRevenue = result.dataValues.total_revenue || 0
+        res.status(200).json({
+            message: 'Total keuntungan dari semua wisata berhasil didapatkan!',
+            totalRevenue: totalRevenue
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+//GET WISATA KEUNTUNGAN 3 TERATAS
+const getTopRevenueWisata = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {
+        return res.status(403).json({ message: "Anda bukan Dinas" })
+    }
+    try {
+        const topWisata = await Transaksi.findAll({
+            attributes: [
+                'id_wisata',
+                [sequelize.fn('sum', sequelize.col('total_bayar')), 'total_keuntungan'],
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'jumlah_tiket']
+            ],
+            where: { status: 'Terkonfirmasi' },
+            group: ['id_wisata'],
+            order: [[sequelize.literal('total_keuntungan'), 'DESC']],
+            limit: 3,
+            include: [{
+                model: Wisata,
+                attributes: ['nama_wisata', 'lokasi'],
+            }]
+        })
+        if (topWisata.length === 0) {
+            return res.status(404).json({message: "Tidak ada data transaksi yang ditemukan"})
+        }
+        const formattedResult = topWisata.map(wisata => ({
+            nama_wisata: wisata.Wisatum.nama_wisata,
+            lokasi: wisata.Wisatum.lokasi,
+            total_penjualan_tiket: wisata.dataValues.total_keuntungan,
+            jumlah_tiket: wisata.dataValues.jumlah_tiket
+        }))
+        res.status(200).json({
+            message: "Data Wisata teratas berdasarkan keuntungan berhasil didapatkan!",
+            data: formattedResult
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
 module.exports = {
     getAllPengelola,
     getDetailPengelola,
-    approvePengelola
+    approvePengelola,
+    getTotalWisata,
+    getApprovedPengelolaCount,
+    getTotalVisitor,
+    getTotalRevenue,
+    getTopRevenueWisata
 }
