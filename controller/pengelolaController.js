@@ -2,6 +2,7 @@ const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail, User, sequel
 const idGenerator = require('../helper/userIdGenerator')
 const path = require('path')
 const fs = require("node:fs");
+const bcrypt = require("bcryptjs");
 
 //REGISTER WISATA
 const registerWisata = async (req, res) => {
@@ -378,6 +379,39 @@ const getTotalVisitor = async (req, res) => {
     }
 }
 
+// MENAMBAHKAN AKUN SCANNER
+const addScannerWisata = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'PNGL') {
+        return res.status(403).json({message:"Maaf anda bukan pengelola!"})
+    }
+    const idUser = req.user.id_user
+    if (!idUser) {
+        return res.status(400).json({message:"Id User tidak ditemukan! harap kembali"})
+    }
+    const hashedPassword = await bcrypt.hash(req.body.password_hash, 10);
+    if (!hashedPassword) {
+        return res.status(400).json({message: "Please enter a password!"})
+    }
+    try {
+        const userId = await idGenerator.generateUserId()
+        const scannerId = await idGenerator.generateScannerId()
+        const user = await User.create({
+            id_user: userId,
+            id_role: 'SCNR',
+            nama_lengkap: req.body.nama_lengkap,
+            email:req.body.email,
+            tanggal_lahir:req.body.tanggal_lahir,
+            no_telpon:req.body.no_telpon,
+            gender:req.body.gender,
+            password_hash:hashedPassword
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({message:"Server Error", error: err.message})
+    }
+}
+
 module.exports = {
     registerWisata,
     getWisata,
@@ -388,4 +422,5 @@ module.exports = {
     updateStatusTransaction,
     getTotalPenjualan,
     getTotalVisitor,
+    addScannerWisata,
 }

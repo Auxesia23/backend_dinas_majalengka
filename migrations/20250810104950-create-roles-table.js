@@ -13,6 +13,7 @@ module.exports = {
                 type: Sequelize.ENUM(
                     'dinas',
                     'pengelola',
+                    'scanner',
                     'user'
                 ),
                 allowNull: false

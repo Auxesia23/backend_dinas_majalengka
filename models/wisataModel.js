@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
             this.belongsTo(models.Rating, {foreignKey:'id_wisata'})
             this.hasMany(models.Transaksi, {foreignKey:'id_wisata'})
             this.hasMany(models.GaleriWisata, {foreignKey:'id_wisata'})
+            this.hasMany(models.Scanner, {foreignKey:'id_wisata'})
         }
     }
     Wisata.init({

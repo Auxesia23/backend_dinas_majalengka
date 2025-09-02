@@ -9,10 +9,13 @@ module.exports = {
                 role_name: "dinas"
             }, {
                 id_role: "PNGL",
-                role_name: "pengelola",
+                role_name: "pengelola"
             }, {
                 id_role: "USR",
-                role_name: "user",
+                role_name: "user"
+            }, {
+                id_role: "SCNR",
+                role_name: "scanner"
             }
         ])
     },

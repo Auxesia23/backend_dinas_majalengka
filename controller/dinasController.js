@@ -268,6 +268,56 @@ const getTopRevenueWisata = async (req, res) => {
     }
 }
 
+//GET ALL WISATA REVENUE
+const getAllWisataRevenue = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {
+        return res.status(403).json({ message: "Anda bukan Dinas" })
+    }
+    try {
+        const result = await Transaksi.findAll({
+            attributes: [
+                'id_wisata',
+                [sequelize.fn('sum', sequelize.col('total_bayar')), 'total_keuntungan'],
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'jumlah_tiket'],
+            ],
+            where: { status: 'Terkonfirmasi' },
+            group: ['id_wisata'],
+            order: [[sequelize.literal('total_keuntungan'), 'DESC']],
+            include: [{
+                model: Wisata,
+                attributes: ['nama_wisata', 'lokasi', 'averageRating'],
+                include: [{
+                    model: Pengelola,
+                    attributes: ['id_pengelola'],
+                    include: [{
+                        model: User,
+                        attributes: ['nama_lengkap'],
+                    }]
+                }]
+            }]
+        })
+        if (result.length === 0) {
+            return res.status(404).json({ message: "Tidak ada transaksi yang ditemukan" })
+        }
+        const formattedResult = result.map(transaksi => ({
+            nama_wisata: transaksi.Wisatum.nama_wisata,
+            nama_pengelola_wisata: transaksi.Wisatum.Pengelola.User.nama_lengkap,
+            lokasi: transaksi.Wisatum.lokasi,
+            rating: transaksi.Wisatum.averageRating,
+            total_penjualan_tiket: transaksi.dataValues.total_keuntungan,
+            jumlah_tiket: transaksi.dataValues.jumlah_tiket,
+        }))
+        res.status(200).json({
+            message: "Data total penjualan wisata berhasil didapatkan!",
+            data: formattedResult
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
 module.exports = {
     getAllPengelola,
     getDetailPengelola,
@@ -276,5 +326,6 @@ module.exports = {
     getApprovedPengelolaCount,
     getTotalVisitor,
     getTotalRevenue,
-    getTopRevenueWisata
+    getTopRevenueWisata,
+    getAllWisataRevenue
 }

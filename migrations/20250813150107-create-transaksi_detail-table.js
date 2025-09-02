@@ -39,6 +39,11 @@ module.exports = {
                 type: Sequelize.FLOAT,
                 allowNull: false
             },
+            isScanned: {
+                type: Sequelize.BOOLEAN,
+                allowNull: false,
+                defaultValue: false
+            },
             createdAt: {
                 type: Sequelize.DATE,
                 allowNull: false,

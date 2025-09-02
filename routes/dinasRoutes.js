@@ -12,5 +12,6 @@ router.get('/getAllPengelola', verifyToken, dinasController.getApprovedPengelola
 router.get('/getTotalPengunjung', verifyToken, dinasController.getTotalVisitor)
 router.get('/getTotalRevenue', verifyToken, dinasController.getTotalRevenue)
 router.get('/getTop3Wisata', verifyToken, dinasController.getTopRevenueWisata)
+router.get('/getAllWisataRevenue', verifyToken, dinasController.getAllWisataRevenue)
 
 module.exports = router

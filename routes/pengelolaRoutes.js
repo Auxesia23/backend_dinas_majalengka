@@ -46,4 +46,6 @@ router.patch('/updateWisataGallery',
 
 router.patch('/updateStatusTransaction/:id', verifyToken, pengelolaController.updateStatusTransaction)
 
+router.post('/addScanner', verifyToken, pengelolaController)
+
 module.exports = router

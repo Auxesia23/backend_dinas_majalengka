@@ -82,6 +82,10 @@ const getWisataDetail = async (req, res) => {
         if (!pengelola) {
             return res.status(404).json({message:"Pengelola no existed"})
         }
+        const user = await User.findOne({where: {id_user: pengelola.id_user}})
+        if (!user) {
+            return res.status(404).json({message:"Pengelola no existed"})
+        }
         const baseURL = `${req.protocol}://${req.get('host')}`
         const formattedWisata = {
             ...wisata.toJSON(),
@@ -105,6 +109,7 @@ const getWisataDetail = async (req, res) => {
         })
         res.status(200).json({
             message:"Data wisata berhasil diambil",
+            no_telpon: user.no_telpon,
             data: formattedWisata,
             qr_code: formattedPengelola.qr_code,
             gallery: formattedGaleriWisata,
