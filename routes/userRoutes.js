@@ -7,5 +7,6 @@ router.get('/info', verifyToken, userController.getProtected)
 router.get('/getAllUser', verifyToken, userController.getAllUser)
 router.get('/getHistoryTransactions', verifyToken, userController.getHistoryTransactions)
 router.get('/getDetailTransactions/:id', verifyToken, userController.getDetailTransactions)
+router.get('/getTicketDetails/:id', verifyToken, userController.getTicketDetails)
 
 module.exports = router
