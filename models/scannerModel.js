@@ -50,4 +50,5 @@ module.exports = (sequelize, DataTypes) => {
         tableName: 'scanner',
         timestamps: true
     })
+    return Scanner
 }

@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoutes')
 const pengelolaRoutes = require('./routes/pengelolaRoutes')
 const wisataRoutes = require('./routes/wisataRoutes')
 const dinasRoutes = require('./routes/dinasRoutes')
+const scannerRoutes = require('./routes/scannerRoutes')
 const cors = require('cors')
 
 const app = express()
@@ -33,6 +34,9 @@ app.use('/pengelola', pengelolaRoutes)
 
 //WISATA
 app.use('/wisata', wisataRoutes)
+
+//SCANNER
+app.use('/scan', scannerRoutes)
 
 app.listen(port, () => {
     console.log(`App listening on ${port} you can go to http://localhost:${port}`)
