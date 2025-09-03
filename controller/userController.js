@@ -98,8 +98,8 @@ const getDetailTransactions = async(req,res) => {
 
 // GET TICKET FOR TRANSACTION
 const getTicketDetails = async(req, res) => {
-    const idWisata = req.params.id
-    if (!idWisata) {
+    const idTransaksi = req.params.id
+    if (!idTransaksi) {
         return res.status(400).json({message:"Wisata not found"})
     }
     const idUser = req.user.id_user
@@ -112,7 +112,7 @@ const getTicketDetails = async(req, res) => {
     }
     try {
         const transaksi = await Transaksi.findOne({
-            where: {id_wisata: idWisata},
+            where: {id_transaksi: idTransaksi},
             include: [{
                 model: User,
                 attributes: ['nama_lengkap', 'email']
@@ -124,7 +124,7 @@ const getTicketDetails = async(req, res) => {
         const userEmail = transaksi.User.email
         const detailTransaksi = await TransaksiDetail.findAll({where: {id_transaksi: transaksi.id_transaksi}})
 
-        const baseUrl = `${req.protocol}://${req.get('host')}}`
+        const baseUrl = `${req.protocol}s://${req.get('host')}`
 
         const formattedDetails = await Promise.all(detailTransaksi.map(async (detail) => {
             const qrCodeUrl = `${baseUrl}/scan/${detail.id_transaksi}/${detail.id_tiket}`
@@ -161,52 +161,11 @@ const getTicketDetails = async(req, res) => {
         }
 
         doc.end()
-        //
-        // res.status(200).json({
-        //     message:"Berhasil mengambil detail ticket",
-        //     tiket: formattedDetails
-        // })
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: "Server Error", err: err.message })
     }
 }
-
-// //MAKE A TICKET PDF FOR SCANNING
-// const getPDFTickets = async(req,res) => {
-//     const idWisata = req.params.id
-//     if (!idWisata) {
-//         return res.status(400).json({message:"Wisata not found"})
-//     }
-//     const idUser = req.user.id_user
-//     if (!idUser) {
-//         return res.status(400).json({message:"User not found"})
-//     }
-//     const idRole = req.user.id_role
-//     if (idRole !== 'USR') {
-//         return res.status(403).json({message:"You are not User"})
-//     }
-//     try {
-//         const baseUrl = `${req.protocol}://${req.get('host')}}`
-//         const response = await axios.get(`${baseUrl}/user/getTicketDetails/${idWisata}`)
-//         const tickets = response.data.tiket
-//
-//         if (!tickets || tickets.length === 0) {
-//             return res.status(404).json({message:"No ticket found for this transaction"})
-//         }
-//
-//         const doc = new PDFDocument({
-//             size: 'A4',
-//             margin: 30
-//         })
-//
-//         res.setHeader('Content-Type', 'application/pdf')
-//         res.setHeader('Content-Disposition', `attachment; filename=tickets-${idWisata}`)
-//     } catch (e) {
-//         console.error(e)
-//         return res.status(500).json({ message: "Server Error", err: e.message })
-//     }
-// }
 
 module.exports = {
     getProtected,
