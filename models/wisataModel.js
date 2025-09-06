@@ -4,8 +4,10 @@ module.exports = (sequelize, DataTypes) => {
     class Wisata extends Model {
         static associate(models) {
             this.belongsTo(models.Pengelola, {foreignKey:'id_pengelola'})
+            this.belongsTo(models.Rating, {foreignKey:'id_wisata'})
             this.hasMany(models.Transaksi, {foreignKey:'id_wisata'})
             this.hasMany(models.GaleriWisata, {foreignKey:'id_wisata'})
+            this.hasMany(models.Scanner, {foreignKey:'id_wisata'})
         }
     }
     Wisata.init({
@@ -29,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull:false
         },
+        deskripsi: {
+            type: DataTypes.TEXT,
+            allowNull:false
+        },
         lokasi:{
             type: DataTypes.STRING,
             allowNull:false
@@ -49,8 +55,8 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.JSON,
             allowNull:true
         },
-        coordinates:{
-            type: DataTypes.GEOMETRY('POINT'),
+        locationGoogleMaps:{
+            type: DataTypes.STRING,
             allowNull:false
         },
         fasilitas:{
@@ -68,6 +74,11 @@ module.exports = (sequelize, DataTypes) => {
         url_gambar_utama:{
             type: DataTypes.STRING,
             allowNull:false
+        },
+        averageRating: {
+            type: DataTypes.FLOAT,
+            allowNull: true,
+            defaultValue: 0
         }
     }, {
         sequelize,

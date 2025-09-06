@@ -1,7 +1,9 @@
-const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail, User} = require('../models')
+const {Pengelola, Wisata, GaleriWisata, Transaksi, TransaksiDetail, User, Scanner, sequelize} = require('../models')
 const idGenerator = require('../helper/userIdGenerator')
 const path = require('path')
 const fs = require("node:fs");
+const bcrypt = require("bcryptjs");
+const transporter = require('../helper/email')
 
 //REGISTER WISATA
 const registerWisata = async (req, res) => {
@@ -30,15 +32,13 @@ const registerWisata = async (req, res) => {
             id_wisata:newWisataId,
             id_pengelola: pengelola.id_pengelola,
             nama_wisata: body.nama_wisata,
+            deskripsi: body.deskripsi,
             lokasi: body.lokasi,
             jam_buka: body.jam_buka,
             jam_tutup: body.jam_tutup,
             jam_terbaik: body.jam_terbaik,
             hari_operasi: body.hari_operasi,
-            coordinates: {
-                type: 'Point',
-                coordinates: [body.longtitude, body.latitude]
-            },
+            locationGoogleMaps: body.locationGoogleMaps,
             fasilitas: body.fasilitas,
             asuransi: body.asuransi,
             harga_tiket: body.harga_tiket,
@@ -126,6 +126,7 @@ const updateWisataData = async (req,res) => {
         }
 
         if (body.nama_wisata) wisata.nama_wisata = body.nama_wisata
+        if (body.deskripsi) wisata.deskripsi = body.deskripsi
         if (body.lokasi) wisata.lokasi = body.lokasi
         if (body.jam_buka) wisata.jam_buka = body.jam_buka
         if (body.jam_tutup) wisata.jam_tutup = body.jam_tutup
@@ -134,14 +135,10 @@ const updateWisataData = async (req,res) => {
         if (body.asuransi) wisata.asuransi = body.asuransi
         if (body.harga_tiket) wisata.harga_tiket = body.harga_tiket
         if (body.hari_operasi) wisata.hari_operasi = body.hari_operasi
-        if (body.latitude && body.longitude) {
-            wisata.coordinates = {
-                type: 'Point',
-                coordinates: [body.longitude, body.latitude]
-            }
-        }
+        if (body.locationGoogleMaps) wisata.locationGoogleMaps = body.locationGoogleMaps
         console.log(fileGambar)
         if (fileGambar) wisata.url_gambar_utama = fileGambar.path
+
 
         await wisata.save()
         res.status(200).json({message: "Data berhasil diupdate", data: wisata})
@@ -214,15 +211,14 @@ const updateWisataGallery = async (req,res) => {
 }
 
 //CHECK HISTORY TRANSAKSI BERDASARKAN WISATA SI PENGELOLA
-//TODO: Belum dicoba checkHistoryTransaction
 const checkHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
     if (!idUser) {
-        res.status(401).json({ message: "User ID tidak ditemukan" })
+        return res.status(401).json({ message: "User ID tidak ditemukan" })
     }
     const roleUser = req.user.id_role
     if (roleUser !== 'PNGL') {
-        res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
+        return res.status(403).json({message:"Anda bukan pengelola! silahkan kembali"})
     }
     try {
         const pengelola = await Pengelola.findOne({where: {id_user: idUser} })
@@ -248,15 +244,14 @@ const checkHistoryTransaction = async (req,res) => {
 }
 
 //GET DETAIL TRANSACTION
-//TODO: Belum dicoba checkDetailHistoryTransaction
 const checkDetailHistoryTransaction = async (req,res) => {
     const idUser = req.user.id_user
     if (!idUser) {
-        res.status(401).json({ message: "User ID tidak ditemukan" })
+        return res.status(401).json({ message: "User ID tidak ditemukan" })
     }
     const roleUser = req.user.id_role
     if (roleUser !== 'PNGL') {
-        res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
+        return res.status(403).message({message:"Anda bukan pengelola! silahkan kembali"})
     }
     const transaksiId = req.params.id
     try {
@@ -283,20 +278,59 @@ const checkDetailHistoryTransaction = async (req,res) => {
 }
 
 //ENDPOINT UBAH STATUS TRANSAKSI
-//TODO: Belum dicoba updateStatusTransaction
 const updateStatusTransaction = async (req,res) => {
     const idTransaction = req.params.id
     const status = req.body.status
     if (!idTransaction) {
-        res.status(400).message({message:"ID Transaksi tidak ada"})
+        return res.status(400).message({message:"ID Transaksi tidak ada"})
     }
     if (!status) {
-        res.status(400).message({message:"Status tidak ada"})
+        return res.status(400).message({message:"Status tidak ada"})
     }
     try {
         const transaction = await Transaksi.findOne({
             where: {id_transaksi: idTransaction}
         })
+        const user = await User.findOne({
+            where: {id_user: transaction.id_user}
+        })
+        const wisata = await Wisata.findOne({
+            where: {id_wisata: transaction.id_wisata}
+        })
+
+        const recipientEmail = user.email
+        const recipientName = user.nama_lengkap
+
+        let emailSubject = ''
+        let emailHtml = ''
+
+        if (status === 'Terkonfirmasi') {
+            emailSubject = 'Persetujuan Pemesanan Ticket Wisata Anda'
+            emailHtml = `
+                <h3>Halo, ${recipientName},</h3>
+                <p>Pemesanan Ticket Anda telah **Disetujui** oleh Pengelola</p>
+                <p>Sekarang Anda dapat mengunjungi wisata Kami ${wisata.nama_wisata}</p>
+                <p>Terima Kasih.</p>
+            `
+        } else if (status === 'Dibatalkan') {
+            emailSubject = 'Pembatalan Pemesanan Ticket Anda'
+            emailHtml = `
+                <h3>Halo, ${recipientName},</h3>
+                <p>Pemesanan Ticket Anda telah **Ditolak** oleh Pengelola</p>
+                <p>Mohon maaf harap hubungi customer service atau langsung mengunjungi ${wisata.nama_wisata}</p>
+                <p>Terima Kasih.</p>
+            `
+        }
+
+        const mailOptions = {
+            from: 'Admin@relawanmate.site',
+            to: recipientEmail,
+            subject: emailSubject,
+            html: emailHtml
+        }
+
+        await transporter.sendMail(mailOptions)
+
         if (status) {
             transaction.status = status
         }
@@ -311,6 +345,156 @@ const updateStatusTransaction = async (req,res) => {
     }
 }
 
+//GET TOTAL PENJUALAN
+const getTotalPenjualan = async (req, res) => {
+    const idRole = req.user.id_role
+    const idUser = req.user.id_user
+    try {
+        if (idRole !== 'PNGL') {
+            return res.status(403).json({message:"Anda bukan pengelola"})
+        }
+        const pengelola = await Pengelola.findOne({where: {id_user: idUser}})
+        if (!pengelola) {
+            return res.status(400).json({message:"Data pengelola tidak ditemukan"})
+        }
+        const wisata = await Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
+        if (!wisata) {
+            return res.status(400).json({message:"Data Wisata tidak ditemukan"})
+        }
+
+        const result = await Transaksi.findOne({
+            attributes: [
+                [sequelize.fn('sum', sequelize.col('total_bayar')), 'total_penjualan']
+            ],
+            where: {
+                id_wisata: wisata.id_wisata,
+                status: 'Terkonfirmasi'
+            }
+        })
+
+        const totalPenjualan = result.dataValues.total_penjualan || 0
+        res.status(200).json({
+            message:`Total penjualan berhasil didapatkan`,
+            totalPenjualan: totalPenjualan
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+const getTotalVisitor = async (req, res) => {
+    const idRole = req.user.id_role
+    const idUser = req.user.id_user
+    try {
+        if (idRole !== 'PNGL') {
+            return res.status(403).json({message:"Anda bukan pengelola"})
+        }
+        const pengelola = await Pengelola.findOne({where: {id_user: idUser}})
+        if (!pengelola) {
+            return res.status(400).json({message:"Data pengelola tidak ditemukan"})
+        }
+        const wisata = await Wisata.findOne({where: {id_pengelola: pengelola.id_pengelola}})
+        if (!wisata) {
+            return res.status(400).json({message:"Data Wisata tidak ditemukan"})
+        }
+
+        const result = await Transaksi.findOne({
+            attributes: [
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'total_pengunjung'],
+            ],
+            where: {
+                id_wisata: wisata.id_wisata,
+                status: 'Terkonfirmasi'
+            }
+        })
+
+        const totalPengunjung = result.dataValues.total_pengunjung || 0
+        res.status(200).json({
+            message:`Total pengunjung berhasil didapatkan`,
+            totalPengunjung: totalPengunjung
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({message:"Server Error", error: err.message})
+    }
+}
+
+// MENAMBAHKAN AKUN SCANNER
+const addScannerWisata = async (req, res) => {
+    const idRole = req.user.id_role
+    if (idRole !== 'PNGL') {
+        return res.status(403).json({message:"Maaf anda bukan pengelola!"})
+    }
+    const idUser = req.user.id_user
+    if (!idUser) {
+        return res.status(400).json({message:"Id User tidak ditemukan! harap kembali"})
+    }
+    const pengelola = await Pengelola.findOne({ where: {id_user: idUser} })
+    const wisata = await Wisata.findOne({ where: {id_pengelola: pengelola.id_pengelola} })
+    const {nama_lengkap, email, tanggal_lahir, no_telpon, gender, password_hash} = req.body
+
+    if (!nama_lengkap) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!email) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!tanggal_lahir) { return res.status(400).json({message:"Tolong isi Tanggal Lahir"}) }
+    if (!no_telpon) { return res.status(400).json({message:"Tolong isi nomor telpon"}) }
+    if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
+    if (!password_hash) { return res.status(400).json({message:"Tolong isi Password"}) }
+
+    if (password_hash.length < 8) {
+        return res.status(400).json({ message: "Password must at least 8 characters!" })
+    }
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
+    if (!specialCharRegex.test(password_hash)) {
+        return res.status(400).json({ message: "Password must at least 1 special character!" })
+    }
+    const numberRegex = /[0-9]+/
+    if (!numberRegex.test(password_hash)) {
+        return res.status(400).json({ message: "Password must at least 1 number!" })
+    }
+    const upperCaseRegex = /[A-Z]+/
+    if (!upperCaseRegex.test(password_hash)) {
+        return res.status(400).json({ message: "Password must at least 1 Capital character!" })
+    }
+
+    const hashedPassword = await bcrypt.hash(password_hash, 10);
+    if (!hashedPassword) {
+        return res.status(400).json({message: "Please enter a password!"})
+    }
+    try {
+        const existingUser = await User.findOne({
+            where: { email: email}
+        })
+        if (existingUser) {
+            return res.status(409).json({ message: "Email already exists! Please use another email!" })
+        }
+        const userId = await idGenerator.generateUserId()
+        const scannerId = await idGenerator.generateScannerId()
+        const user = await User.create({
+            id_user: userId,
+            id_role: 'SCNR',
+            nama_lengkap: nama_lengkap,
+            email: email,
+            tanggal_lahir: tanggal_lahir,
+            no_telpon: no_telpon,
+            gender: gender,
+            password_hash:hashedPassword
+        })
+        const scannerUser = await Scanner.create({
+            id_scanner: scannerId,
+            id_user: user.id_user,
+            id_wisata: wisata.id_wisata
+        })
+        res.status(200).json({
+            message: 'Scanner added Successfully!',
+            data: scannerUser
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({message:"Server Error", error: err.message})
+    }
+}
+
 module.exports = {
     registerWisata,
     getWisata,
@@ -318,5 +502,8 @@ module.exports = {
     updateWisataGallery,
     checkHistoryTransaction,
     checkDetailHistoryTransaction,
-    updateStatusTransaction
+    updateStatusTransaction,
+    getTotalPenjualan,
+    getTotalVisitor,
+    addScannerWisata,
 }

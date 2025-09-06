@@ -1,22 +1,27 @@
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable('roles', {
-            id_role: {
-                type: Sequelize.STRING,
-                unique: true,
-                allowNull: false,
-                primaryKey: true
+        await queryInterface.createTable('message_approvements', {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
             },
-            role_name: {
-                type: Sequelize.ENUM(
-                    'dinas',
-                    'pengelola',
-                    'scanner',
-                    'user'
-                ),
-                allowNull: false
+            idPengelola: {
+                type: Sequelize.STRING,
+                allowNull: false,
+                references: {
+                    model: 'pengelola',
+                    key: 'id_pengelola'
+                },
+                onDelete: 'CASCADE',
+                onUpdate: 'CASCADE',
+            },
+            pesan: {
+                type: Sequelize.TEXT,
+                allowNull: true,
             },
             createdAt: {
                 type: Sequelize.DATE,
@@ -32,6 +37,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('roles')
+        await queryInterface.dropTable('message_approvements')
     }
 };

@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     class Pengelola extends Model {
         static associate(models) {
             this.belongsTo(models.User, {foreignKey:'id_user'})
+            this.belongsTo(models.MessageApprovement, {foreignKey:'id_pengelola'})
             this.hasOne(models.Wisata, {foreignKey:'id_pengelola'})
         }
     }
@@ -43,6 +44,25 @@ module.exports = (sequelize, DataTypes) => {
         qr_code: {
             type: DataTypes.STRING,
             allowNull:false
+        },
+        is_approved: {
+            type: DataTypes.ENUM(
+                'Pending',
+                'Disetujui',
+                'Ditolak'
+            ),
+            allowNull: false,
+            defaultValue: 'Pending'
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.literal("CURRENT_TIMESTAMP")
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.literal("CURRENT_TIMESTAMP")
         }
     }, {
         sequelize,

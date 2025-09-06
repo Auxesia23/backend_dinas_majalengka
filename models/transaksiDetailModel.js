@@ -29,12 +29,23 @@ module.exports = (sequelize, DataTypes) => {
             allowNull:false
         },
         umur:{
-            type: DataTypes.INTEGER,
+            type: DataTypes.ENUM(
+                'Balita',
+                'Anak-anak',
+                'Remaja',
+                'Dewasa',
+                'Lansia'
+            ),
             allowNull:false
         },
         harga:{
             type: DataTypes.FLOAT,
             allowNull:false
+        },
+        isScanned: {
+            type: DataTypes.BOOLEAN,
+            allowNull:false,
+            defaultValue: false
         },
         createdAt: {
             type: DataTypes.DATE,

@@ -5,6 +5,8 @@ const authRoutes = require('./routes/authRoutes')
 const userRoutes = require('./routes/userRoutes')
 const pengelolaRoutes = require('./routes/pengelolaRoutes')
 const wisataRoutes = require('./routes/wisataRoutes')
+const dinasRoutes = require('./routes/dinasRoutes')
+const scannerRoutes = require('./routes/scannerRoutes')
 const cors = require('cors')
 
 const app = express()
@@ -14,9 +16,8 @@ app.use(express.static('public'))
 app.use(bodyParser.json())
 app.use(cors())
 
-app.get('/', (req,res) => {
-    res.json({message:'Berhasil'})
-})
+//DINAS
+app.use('/dinas', dinasRoutes)
 
 //AUTH
 app.use('/auth', authRoutes)
@@ -29,6 +30,9 @@ app.use('/pengelola', pengelolaRoutes)
 
 //WISATA
 app.use('/wisata', wisataRoutes)
+
+//SCANNER
+app.use('/scan', scannerRoutes)
 
 app.listen(port, () => {
     console.log(`App listening on ${port} you can go to http://localhost:${port}`)

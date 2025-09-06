@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         role_name:DataTypes.ENUM(
             'dinas',
             'pengelola',
+            'scanner',
             'user'
         )
     }, {

@@ -18,6 +18,8 @@ const upload = multer({storage:storage})
 
 router.get('/getWisata', verifyToken, pengelolaController.getWisata)
 router.get('/getHistoryTransaction', verifyToken, pengelolaController.checkHistoryTransaction)
+router.get('/getTotalPenjualan', verifyToken, pengelolaController.getTotalPenjualan)
+router.get('/getTotalPengunjung', verifyToken, pengelolaController.getTotalVisitor)
 router.get('/getDetailHistoryTransaction/:id', verifyToken, pengelolaController.checkDetailHistoryTransaction)
 
 router.post('/tambah-wisata',
@@ -43,5 +45,7 @@ router.patch('/updateWisataGallery',
 )
 
 router.patch('/updateStatusTransaction/:id', verifyToken, pengelolaController.updateStatusTransaction)
+
+router.post('/addScannerAccount', verifyToken, pengelolaController.addScannerWisata)
 
 module.exports = router
