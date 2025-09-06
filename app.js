@@ -16,10 +16,6 @@ app.use(express.static('public'))
 app.use(bodyParser.json())
 app.use(cors())
 
-app.get('/', (req,res) => {
-    res.json({message:'Berhasil'})
-})
-
 //DINAS
 app.use('/dinas', dinasRoutes)
 

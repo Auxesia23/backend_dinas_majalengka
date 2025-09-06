@@ -11,23 +11,53 @@ const SECRET_KEY = process.env.JWT_KEY
 
 //REGISTER
 const register = async(req, res) => {
-    const body = req.body
+    const password = req.body.password_hash
+    const { nama_lengkap, email, tanggal_lahir, no_telpon, gender} = req.body
+
+    if (password.length < 8) {
+        return res.status(400).json({ message: "Password must at least 8 characters!" })
+    }
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
+    if (!specialCharRegex.test(password)) {
+        return res.status(400).json({ message: "Password must at least 1 special character!" })
+    }
+    const numberRegex = /[0-9]+/
+    if (!numberRegex.test(password)) {
+        return res.status(400).json({ message: "Password must at least 1 number!" })
+    }
+    const upperCaseRegex = /[A-Z]+/
+    if (!upperCaseRegex.test(password)) {
+        return res.status(400).json({ message: "Password must at least 1 Capital character!" })
+    }
+
+    if (!nama_lengkap) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!email) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!tanggal_lahir) { return res.status(400).json({message:"Tolong isi Tanggal Lahir"}) }
+    if (!no_telpon) { return res.status(400).json({message:"Tolong isi nomor telpon"}) }
+    if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
+    if (!password) { return res.status(400).json({message:"Tolong isi Password"}) }
     
-    const hashedPassword = await bcrypt.hash(body.password_hash, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     if (!hashedPassword) {
         return res.status(400).json({message: "Please enter a password!"})
     }
     try {
+        const existingUser = await User.findOne({
+            where: { email: email}
+        })
+        if (existingUser) {
+            return res.status(409).json({ message: "Email already exists! Please use another email!" })
+        }
         const newUserId = await idGenerator.generateUserId()
         const user = await User.create({ 
-            id_user:newUserId,
+            id_user: newUserId,
             id_role: 'USR',
-            nama_lengkap:body.nama_lengkap,
-            email:body.email,
-            tanggal_lahir:body.tanggal_lahir,
-            no_telpon:body.no_telpon,
-            gender:body.gender,
-            password_hash:hashedPassword
+            nama_lengkap: nama_lengkap,
+            email: email,
+            tanggal_lahir: tanggal_lahir,
+            no_telpon: no_telpon,
+            gender: gender,
+            password_hash: hashedPassword
         })
 
         const mailOption = {
@@ -52,9 +82,43 @@ const register = async(req, res) => {
 //PENGELOLA
 //REGISTER
 const registerPengelola = async (req,res) => {
-    const body = req.body
-    const hashedPassword = await bcrypt.hash(body.password_hash, 10)
+    const { nama_lengkap, email, tanggal_lahir, no_telpon, gender} = req.body
+    const password = req.body.password_hash
+
+    if (password.length < 8) {
+        return res.status(400).json({ message: "Password must at least 8 characters!" })
+    }
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
+    if (!specialCharRegex.test(password)) {
+        return res.status(400).json({ message: "Password must at least 1 special character!" })
+    }
+    const numberRegex = /[0-9]+/
+    if (!numberRegex.test(password)) {
+        return res.status(400).json({ message: "Password must at least 1 number!" })
+    }
+    const upperCaseRegex = /[A-Z]+/
+    if (!upperCaseRegex.test(password)) {
+        return res.status(400).json({ message: "Password must at least 1 Capital character!" })
+    }
+
+    if (!nama_lengkap) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!email) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!tanggal_lahir) { return res.status(400).json({message:"Tolong isi Tanggal Lahir"}) }
+    if (!no_telpon) { return res.status(400).json({message:"Tolong isi nomor telpon"}) }
+    if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
+    if (!password) { return res.status(400).json({message:"Tolong isi Password"}) }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!hashedPassword) {
+        return res.status(400).json({message: "Please enter a password!"})
+    }
     try {
+        const existingUser = await User.findOne({
+            where: { email: email}
+        })
+        if (existingUser) {
+            return res.status(409).json({ message: "Email already exists! Please use another email!" })
+        }
         const files = req.files
         if (!files || !files.ktp || !files.npwp || !files.nib || !files.qr_code) {
             return res.status(400).json({ message: 'Lengkapin semua dokumen dulu, bro.' });
@@ -66,13 +130,13 @@ const registerPengelola = async (req,res) => {
     
         const newUserId = await idGenerator.generateUserId()
         const user = await User.create({ 
-            id_user:newUserId,
+            id_user: newUserId,
             id_role: 'PNGL',
-            nama_lengkap:body.nama_lengkap,
-            email:body.email,
-            tanggal_lahir:body.tanggal_lahir,
-            no_telpon:body.no_telpon,
-            gender:body.gender,
+            nama_lengkap: nama_lengkap,
+            email: email,
+            tanggal_lahir: tanggal_lahir,
+            no_telpon: no_telpon,
+            gender: gender,
             password_hash:hashedPassword
         })
         const newPengelolaId = await idGenerator.generatePengelolaId()

@@ -46,7 +46,13 @@ const scanTicket = async (req, res) => {
             return res.status(200).send({message:'Already Scanned!'})
         }
         await transaksiDetail.save()
-        res.status(200).send({message:'Scanned Successfully'})
+        res.status(200).send({
+            message:'Scanned Successfully',
+            id_ticket: transaksiDetail.id_tiket,
+            id_transaksi: transaksiDetail.id_transaksi,
+            gender: transaksiDetail.gender,
+            umur: transaksiDetail.umur,
+        })
     } catch (err) {
         console.error(err)
         return res.status(500).send({message:'Something went wrong!', error:err.message})

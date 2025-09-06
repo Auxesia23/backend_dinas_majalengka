@@ -441,11 +441,33 @@ const addScannerWisata = async (req, res) => {
     if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
     if (!password_hash) { return res.status(400).json({message:"Tolong isi Password"}) }
 
+    if (password_hash.length < 8) {
+        return res.status(400).json({ message: "Password must at least 8 characters!" })
+    }
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
+    if (!specialCharRegex.test(password_hash)) {
+        return res.status(400).json({ message: "Password must at least 1 special character!" })
+    }
+    const numberRegex = /[0-9]+/
+    if (!numberRegex.test(password_hash)) {
+        return res.status(400).json({ message: "Password must at least 1 number!" })
+    }
+    const upperCaseRegex = /[A-Z]+/
+    if (!upperCaseRegex.test(password_hash)) {
+        return res.status(400).json({ message: "Password must at least 1 Capital character!" })
+    }
+
     const hashedPassword = await bcrypt.hash(password_hash, 10);
     if (!hashedPassword) {
         return res.status(400).json({message: "Please enter a password!"})
     }
     try {
+        const existingUser = await User.findOne({
+            where: { email: email}
+        })
+        if (existingUser) {
+            return res.status(409).json({ message: "Email already exists! Please use another email!" })
+        }
         const userId = await idGenerator.generateUserId()
         const scannerId = await idGenerator.generateScannerId()
         const user = await User.create({
