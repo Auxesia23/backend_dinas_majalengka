@@ -37,7 +37,7 @@ const getMostPopularByTickets = async (req, res) => {
             limit: 1
         })
         if (popularWisata.length === 0) {
-            return res.status(404).json({ message: "Tidak ada data transaksi yang ditemukan"})
+            return res.status(200).json({ message: "Sepertinya tidak ada wisata populer saat ini!"})
         }
         const idWisata = popularWisata[0].id_wisata
         const wisata = await Wisata.findOne({

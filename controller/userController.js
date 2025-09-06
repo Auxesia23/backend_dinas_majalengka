@@ -41,7 +41,7 @@ const getAllUser = async(req,res) => {
 const getHistoryTransactions = async(req, res) => {
     const idUser = req.user.id_user
     if (!idUser) {
-        return res.status(403).json({message:"User not found"})
+        return res.status(404).json({message:"User not found"})
     }
     try {
         const transactions = await Transaksi.findAll({

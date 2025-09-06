@@ -29,6 +29,19 @@ const register = async(req, res) => {
             gender:body.gender,
             password_hash:hashedPassword
         })
+
+        const mailOption = {
+            from: 'Admin@relawanmate.site',
+            to: user.email,
+            subject: 'Pendaftaran User Berhasil',
+            html: `
+                <h3>Hello, ${user.nama_lengkap}</h3>
+                <p>Anda telah mendaftarkan diri sebagai User. Semoga puas dengan layanan kami!</p>
+                <p>TerimaKasih.</p>
+                `,
+        }
+        await transporter.sendMail(mailOption)
+
         return res.status(200).json({ message: "Register berhasil", table_user: user});
     } catch (err) {
         console.error(err)

@@ -3,6 +3,7 @@ const idGenerator = require('../helper/userIdGenerator')
 const path = require('path')
 const fs = require("node:fs");
 const bcrypt = require("bcryptjs");
+const transporter = require('../helper/email')
 
 //REGISTER WISATA
 const registerWisata = async (req, res) => {
@@ -290,6 +291,46 @@ const updateStatusTransaction = async (req,res) => {
         const transaction = await Transaksi.findOne({
             where: {id_transaksi: idTransaction}
         })
+        const user = await User.findOne({
+            where: {id_user: transaction.id_user}
+        })
+        const wisata = await Wisata.findOne({
+            where: {id_wisata: transaction.id_wisata}
+        })
+
+        const recipientEmail = user.email
+        const recipientName = user.nama_lengkap
+
+        let emailSubject = ''
+        let emailHtml = ''
+
+        if (status === 'Terkonfirmasi') {
+            emailSubject = 'Persetujuan Pemesanan Ticket Wisata Anda'
+            emailHtml = `
+                <h3>Halo, ${recipientName},</h3>
+                <p>Pemesanan Ticket Anda telah **Disetujui** oleh Pengelola</p>
+                <p>Sekarang Anda dapat mengunjungi wisata Kami ${wisata.nama_wisata}</p>
+                <p>Terima Kasih.</p>
+            `
+        } else if (status === 'Dibatalkan') {
+            emailSubject = 'Pembatalan Pemesanan Ticket Anda'
+            emailHtml = `
+                <h3>Halo, ${recipientName},</h3>
+                <p>Pemesanan Ticket Anda telah **Ditolak** oleh Pengelola</p>
+                <p>Mohon maaf harap hubungi customer service atau langsung mengunjungi ${wisata.nama_wisata}</p>
+                <p>Terima Kasih.</p>
+            `
+        }
+
+        const mailOptions = {
+            from: 'Admin@relawanmate.site',
+            to: recipientEmail,
+            subject: emailSubject,
+            html: emailHtml
+        }
+
+        await transporter.sendMail(mailOptions)
+
         if (status) {
             transaction.status = status
         }
