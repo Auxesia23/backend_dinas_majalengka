@@ -7,7 +7,7 @@ const transporter = require('../helper/email')
 
 //REGISTER WISATA
 const registerWisata = async (req, res) => {
-    const body = req.body
+    const { nama_wisata, deskripsi, lokasi, jam_buka, jam_tutup, jam_terbaik, hari_operasi, locationGoogleMaps, fasilitas, asuransi, harga_tiket} = req.body
     const filesGambar = req.files 
     const wisataImages = filesGambar.wisataImages
     const wisataImage = filesGambar.wisataImage
@@ -17,6 +17,18 @@ const registerWisata = async (req, res) => {
     if(!wisataImages || wisataImages.length === 0) {
         return res.status(400).json({ message: 'Tidak ada gambar yang diunggah.' })
     }
+
+    if (!nama_wisata) { return res.status(400).json({message: "Tolong isi nama Wisata!"}) }
+    if (!deskripsi) { return res.status(400).json({message:"Tolong isi deskripsi wisata!"}) }
+    if (!lokasi) { return res.status(400).json({message:"Tolong isi lokasi wisata!"}) }
+    if (!jam_buka) { return res.status(400).json({message:"Tolong isi jam buka wisata!"}) }
+    if (!jam_tutup) { return res.status(400).json({message:"Tolong isi jam tutup wisata!"}) }
+    if (!hari_operasi) { return res.status(400).json({message:"Tolong isi hari operasi wisata!"}) }
+    if (!locationGoogleMaps) { return res.status(400).json({message:"Tolong isi lokasi wisata!"}) }
+    if (!fasilitas) { return res.status(400).json({message:"Tolong isi fasilitas wisata!"}) }
+    if (!asuransi) { return res.status(400).json({message:"Tolong isi Asuransi wisata!"}) }
+    if (!harga_tiket) { return res.status(400).json({message:"Tolong isi harga tiket wisata!"}) }
+
     try {
         const userId = req.user.id_user
         const pengelola = await Pengelola.findOne({where: {id_user: userId}})
@@ -31,17 +43,17 @@ const registerWisata = async (req, res) => {
         const wisata = await Wisata.create({
             id_wisata:newWisataId,
             id_pengelola: pengelola.id_pengelola,
-            nama_wisata: body.nama_wisata,
-            deskripsi: body.deskripsi,
-            lokasi: body.lokasi,
-            jam_buka: body.jam_buka,
-            jam_tutup: body.jam_tutup,
-            jam_terbaik: body.jam_terbaik,
-            hari_operasi: body.hari_operasi,
-            locationGoogleMaps: body.locationGoogleMaps,
-            fasilitas: body.fasilitas,
-            asuransi: body.asuransi,
-            harga_tiket: body.harga_tiket,
+            nama_wisata: nama_wisata,
+            deskripsi: deskripsi,
+            lokasi: lokasi,
+            jam_buka: jam_buka,
+            jam_tutup: jam_tutup,
+            jam_terbaik: jam_terbaik,
+            hari_operasi: hari_operasi,
+            locationGoogleMaps: locationGoogleMaps,
+            fasilitas: fasilitas,
+            asuransi: asuransi,
+            harga_tiket: harga_tiket,
             url_gambar_utama: wisataImage[0].path
         })
 
@@ -77,7 +89,7 @@ const getWisata = async (req, res) => {
         const wisata = await Wisata.findOne({where:{id_pengelola: pengelola.id_pengelola}})
         const galeriWisata = await GaleriWisata.findAll({where: {id_wisata:wisata.id_wisata}})
         if (!wisata || !galeriWisata) {
-            return res.status(200).json({message: "Belum ada wisata maupun galeri"})
+            return res.status(404).json({message: "Belum ada wisata maupun galeri"})
         }
 
         const baseURL = `${req.protocol}://${req.get('host')}`
@@ -435,18 +447,19 @@ const addScannerWisata = async (req, res) => {
     const {nama_lengkap, email, tanggal_lahir, no_telpon, gender, password_hash} = req.body
 
     if (!nama_lengkap) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
-    if (!email) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!email) { return res.status(400).json({message:"Tolong isi Email"}) }
     if (!tanggal_lahir) { return res.status(400).json({message:"Tolong isi Tanggal Lahir"}) }
     if (!no_telpon) { return res.status(400).json({message:"Tolong isi nomor telpon"}) }
     if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
     if (!password_hash) { return res.status(400).json({message:"Tolong isi Password"}) }
 
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Email format is not valid!" })
+    }
+
     if (password_hash.length < 8) {
         return res.status(400).json({ message: "Password must at least 8 characters!" })
-    }
-    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
-    if (!specialCharRegex.test(password_hash)) {
-        return res.status(400).json({ message: "Password must at least 1 special character!" })
     }
     const numberRegex = /[0-9]+/
     if (!numberRegex.test(password_hash)) {

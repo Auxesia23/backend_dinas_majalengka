@@ -17,10 +17,6 @@ const register = async(req, res) => {
     if (password.length < 8) {
         return res.status(400).json({ message: "Password must at least 8 characters!" })
     }
-    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
-    if (!specialCharRegex.test(password)) {
-        return res.status(400).json({ message: "Password must at least 1 special character!" })
-    }
     const numberRegex = /[0-9]+/
     if (!numberRegex.test(password)) {
         return res.status(400).json({ message: "Password must at least 1 number!" })
@@ -31,11 +27,16 @@ const register = async(req, res) => {
     }
 
     if (!nama_lengkap) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
-    if (!email) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!email) { return res.status(400).json({message:"Tolong isi Email"}) }
     if (!tanggal_lahir) { return res.status(400).json({message:"Tolong isi Tanggal Lahir"}) }
     if (!no_telpon) { return res.status(400).json({message:"Tolong isi nomor telpon"}) }
     if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
     if (!password) { return res.status(400).json({message:"Tolong isi Password"}) }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Email format is not valid!" })
+    }
     
     const hashedPassword = await bcrypt.hash(password, 10);
     if (!hashedPassword) {
@@ -82,15 +83,11 @@ const register = async(req, res) => {
 //PENGELOLA
 //REGISTER
 const registerPengelola = async (req,res) => {
-    const { nama_lengkap, email, tanggal_lahir, no_telpon, gender} = req.body
+    const { nama_lengkap, email, tanggal_lahir, no_telpon, gender, tahun_operasi} = req.body
     const password = req.body.password_hash
 
     if (password.length < 8) {
         return res.status(400).json({ message: "Password must at least 8 characters!" })
-    }
-    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
-    if (!specialCharRegex.test(password)) {
-        return res.status(400).json({ message: "Password must at least 1 special character!" })
     }
     const numberRegex = /[0-9]+/
     if (!numberRegex.test(password)) {
@@ -102,11 +99,16 @@ const registerPengelola = async (req,res) => {
     }
 
     if (!nama_lengkap) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
-    if (!email) { return res.status(400).json({message:"Tolong isi Nama lengkap"}) }
+    if (!email) { return res.status(400).json({message:"Tolong isi Email"}) }
     if (!tanggal_lahir) { return res.status(400).json({message:"Tolong isi Tanggal Lahir"}) }
     if (!no_telpon) { return res.status(400).json({message:"Tolong isi nomor telpon"}) }
     if (!gender) { return res.status(400).json({message:"Tolong isi Gender"}) }
     if (!password) { return res.status(400).json({message:"Tolong isi Password"}) }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Email format is not valid!" })
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     if (!hashedPassword) {
@@ -143,7 +145,7 @@ const registerPengelola = async (req,res) => {
         const pengelola = await Pengelola.create({
             id_pengelola:newPengelolaId,
             id_user:user.id_user,
-            tahun_operasi:body.tahun_operasi,
+            tahun_operasi: tahun_operasi,
             url_ktp:ktpUrl,
             url_npwp:npwpUrl,
             url_nib:nibUrl,
@@ -238,7 +240,7 @@ const forgotPassword = async(req,res) => {
             html: `
                 <h3>Hello, ${user.nama_lengkap}</h3>
                 <p>You requested a password reset. Click the link below to reset your password:</p>
-                <a href="http://localhost:5173/admin-panel/reset-password?token=${token}">Reset Password</a>
+                <a href="http://localhost:5173/reset-password?token=${token}">Reset Password</a>
                 <p>This link will expire in a half hour.</p>
                 `,
         }
@@ -263,8 +265,7 @@ const resetPassword = async(req,res) => {
         if(!user) {
             return res.status(400).json({ message: 'Invalid or expired password reset token.' });
         }
-        const hashedPassword = await bcrypt.hash(new_password, 10)
-        user.password_hash = hashedPassword
+        user.password_hash = await bcrypt.hash(new_password, 10)
         user.reset_password_token = null
         user.reset_password_expires = null
         await user.save()

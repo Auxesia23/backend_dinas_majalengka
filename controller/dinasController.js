@@ -18,6 +18,7 @@ const getAllPengelola = async (req, res) => {
                 attributes: ['nama_lengkap', 'email']
             }]
         })
+        if (pengelola.length === 0) {return res.status(404).json({ message: "Tidak ada pengelola satupun" }) }
         res.status(200).json({
             message: "Data berhasil didapatkan",
             data: pengelola
@@ -43,6 +44,7 @@ const getDetailPengelola = async (req, res) => {
                 attributes: ['nama_lengkap', 'email']
             }]
         })
+        if (!pengelola) {return res.status(404).json({ message: "Tidak ada Pengelola pada ID tersebut" }) }
         const baseURL = `${req.protocol}://${req.get('host')}`
         const formattedPengelola = {
             ...pengelola.toJSON(),
@@ -81,6 +83,7 @@ const approvePengelola = async (req,res) => {
                 attributes: ['nama_lengkap', 'email']
             }]
         })
+        if (!pengelola) {return res.status(404).json({ message: "Pengelola tidak cocok dengan User" }) }
         switch (status) {
             case 'Disetujui':
                 pengelola.is_approved = status
@@ -250,7 +253,7 @@ const getTopRevenueWisata = async (req, res) => {
             }]
         })
         if (topWisata.length === 0) {
-            return res.status(404).json({message: "Tidak ada data transaksi yang ditemukan"})
+            return res.status(404).json({message: "Tidak ada Top 3 data wisata populer!"})
         }
         const formattedResult = topWisata.map(wisata => ({
             nama_wisata: wisata.Wisatum.nama_wisata,
@@ -298,7 +301,7 @@ const getAllWisataRevenue = async (req, res) => {
             }]
         })
         if (result.length === 0) {
-            return res.status(404).json({ message: "Tidak ada transaksi yang ditemukan" })
+            return res.status(404).json({ message: "Tidak ada total transaksi semua wisata yang ditemukan!" })
         }
         const formattedResult = result.map(transaksi => ({
             nama_wisata: transaksi.Wisatum.nama_wisata,

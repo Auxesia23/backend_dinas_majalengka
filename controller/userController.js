@@ -22,11 +22,12 @@ const getProtected = async(req, res) => {
 
 //READ all USER
 const getAllUser = async(req,res) => {
-    if(req.user.id_roles !== 'adm_wisata') {
-        return res.status(403).json({message:"Role tidak Valid"})
+    if(req.user.id_roles !== 'DNS') {
+        return res.status(403).json({message:"Anda bukan Dinas"})
     }
     try {
         const user = await User.findAll()
+        if (user.length === 0) {return res.status(404).json({message:"Belum ada User saat ini"})}
         res.json({
             message:"Success fetch data",
             data: user
@@ -52,6 +53,7 @@ const getHistoryTransactions = async(req, res) => {
                 attributes: ['nama_lengkap', 'email']
             }]
         })
+        if (transactions.length === 0) { return res.status(404).json({ message:"Anda belum melakukan transaksi apapun!"}) }
         res.status(200).json({
             message:"Berhasil mengambil data histori transaksi",
             transactions: transactions
@@ -84,7 +86,9 @@ const getDetailTransactions = async(req,res) => {
                 attributes: ['nama_lengkap', 'email']
             }]
         })
+        if (!transaksi) { return res.status(404).json({message:"Tidak ada transaksi dengan ID tersebut!"}) }
         const detailTransaksi = await TransaksiDetail.findAll({where: {id_transaksi: idTransaksi}})
+        if (detailTransaksi.length === 0 ) {return res.status(404).json({message:"Tidak ada Detail Transaksi dengan ID transaksi tersebut!"}) }
         res.status(200).json({
             message:"Berhasil mengambil detail",
             transaksi: transaksi,
@@ -123,6 +127,7 @@ const getTicketDetails = async(req, res) => {
         }
         const userEmail = transaksi.User.email
         const detailTransaksi = await TransaksiDetail.findAll({where: {id_transaksi: transaksi.id_transaksi}})
+        if (detailTransaksi.length === 0) {return res.status(404).json({message:"Tidak ada detail transaksi dengan id Transaksi tersebut!"})}
 
         const baseUrl = `${req.protocol}s://${req.get('host')}`
 

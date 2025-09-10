@@ -30,11 +30,18 @@ const scanTicket = async (req, res) => {
             },
             include: [{
                 model: Transaksi,
-                attributes: ['id_wisata']
+                attributes: ['id_wisata', 'status']
             }]
         })
         if (!transaksiDetail) {
             return res.status(404).send({message:'No Tiket found!'})
+        }
+        const statusTransaksi = transaksiDetail.Transaksi.status
+        if (statusTransaksi === 'Pending') {
+            return res.status(403).json({message:'Transaksi harus di Terima terlebih dahulu'})
+        }
+        if (statusTransaksi === 'Dibatalkan') {
+            return res.status(403).json({message:'Transaksi ini dibatalkan sehingga tidak bisa di Scan'})
         }
         //Check if the scanner is authorized
         if(userScanner.id_wisata !== transaksiDetail.Transaksi.id_wisata) {

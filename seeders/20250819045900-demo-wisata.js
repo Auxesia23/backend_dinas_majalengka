@@ -5,12 +5,12 @@ const {v4: uuidv4} = require('uuid')
 const bcrypt = require('bcryptjs')
 module.exports = {
     async up(queryInterface, Sequelize) {
-        const hashedPassword = await bcrypt.hash('password123', 10);
+        const hashedPassword = await bcrypt.hash('Password123', 10);
         const users = [];
         const pengelolas = [];
         const wisatas = [];
 
-        for (let i = 1; i <= 50; i++) {
+        for (let i = 2; i <= 51; i++) {
             const userId = `USR${String(i).padStart(4, '0')}`;
             const pengelolaId = `PNGL${String(i).padStart(4, '0')}`;
             const wisataId = `WST${String(i).padStart(4, '0')}`;
@@ -67,7 +67,7 @@ module.exports = {
             });
         }
 
-        for (let i = 51; i <= 100; i++) {
+        for (let i = 52; i <= 103; i++) {
             const userId = `USR${String(i).padStart(4, '0')}`
             users.push({
                 id_user: userId,
@@ -83,35 +83,19 @@ module.exports = {
             })
         }
 
-        users.push({
-            id_user: 'USR0101',
-            id_role: 'DNS',
-            nama_lengkap: `Dinas Pariwisata Majalengka`,
-            email: `majalengka.dinas@gmail.com`,
-            tanggal_lahir: new Date(),
-            no_telpon: `+6287745332890`,
-            gender: `Laki-Laki`,
-            password_hash: hashedPassword,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        })
-
         await queryInterface.bulkInsert('user', users, {});
         await queryInterface.bulkInsert('pengelola', pengelolas, {});
         await queryInterface.bulkInsert('wisata', wisatas, {});
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.bulkDelete('wisata', null, {});
-        await queryInterface.bulkDelete('pengelola', null, {});
+        await queryInterface.bulkDelete('wisata', null, {})
+        await queryInterface.bulkDelete('pengelola', null, {})
         await queryInterface.bulkDelete('user', {
             id_role: 'PNGL'
-        }, {});
+        }, {})
         await queryInterface.bulkDelete('user', {
             id_role: 'USR'
-        }, {});
-        await queryInterface.bulkDelete('user', {
-            id_role: 'DNS'
         }, {})
     }
 };
