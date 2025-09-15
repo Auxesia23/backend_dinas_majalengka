@@ -50,7 +50,13 @@ const scanTicket = async (req, res) => {
         if (transaksiDetail.isScanned === false) {
             transaksiDetail.isScanned = true
         } else {
-            return res.status(200).send({message:'Already Scanned!'})
+            return res.status(200).send({
+                message:'Already Scanned!',
+                id_ticket: transaksiDetail.id_tiket,
+                id_transaksi: transaksiDetail.id_transaksi,
+                gender: transaksiDetail.gender,
+                umur: transaksiDetail.umur
+            })
         }
         await transaksiDetail.save()
         res.status(200).send({
@@ -58,7 +64,7 @@ const scanTicket = async (req, res) => {
             id_ticket: transaksiDetail.id_tiket,
             id_transaksi: transaksiDetail.id_transaksi,
             gender: transaksiDetail.gender,
-            umur: transaksiDetail.umur,
+            umur: transaksiDetail.umur
         })
     } catch (err) {
         console.error(err)

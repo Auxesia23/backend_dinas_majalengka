@@ -1,5 +1,11 @@
 const {Pengelola, User, MessageApprovement, Transaksi, sequelize, Wisata} = require('../models')
 const transporter = require('../helper/email')
+const qrisDinamis = require('@agungjsp/qris-dinamis')
+const QRCode = require('qrcode')
+const {Jimp} = require('jimp')
+const jsQR = require('jsqr')
+const path = require('path')
+const fs = require('fs')
 
 //GET ALL PENGELOLA
 const getAllPengelola = async (req, res) => {
@@ -321,6 +327,62 @@ const getAllWisataRevenue = async (req, res) => {
     }
 }
 
+//SHOW QR DYNAMIC FOR VALIDATION
+async function readQRCode(imagePath) {
+    try {
+        const baseDir = path.join(__dirname, '..')
+        const finalPath = path.join(baseDir, imagePath.replace(/\\/g, '/'))
+        if (!fs.existsSync(finalPath)) {
+            console.error('File not found at:', finalPath);
+            return null; // Return null jika file tidak ditemukan
+        }
+
+        const imageBuffer = fs.readFileSync(finalPath)
+        const image = await Jimp.read(imageBuffer)
+        const { data, width, height } = image.bitmap
+        const code = jsQR(new Uint8ClampedArray(data), width, height)
+        console.log(finalPath)
+        if (code) {
+            console.log("QR code berhasil dibaca: " + code.data)
+            return code.data
+        } else {
+            console.log("Tidak ada QR code ditemukan di gambar.");
+            return null;
+        }
+    } catch (err) {
+        console.error('Error in readQRCode', err)
+        return null
+    }
+}
+const getQrCodeValidation = async (req, res) => {
+    const idPengelola = req.params.id
+    if (!idPengelola) {return res.status(404).json({ message: "Id Pengelola tidak valid!" }) }
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') {return res.status(403).json({ message: "Only Dinas can validate!" }) }
+    try {
+        const pengelola = await Pengelola.findOne({
+            where: { id_pengelola: idPengelola }
+        })
+        if (!pengelola) { return res.status(404).json({ message: "Pengelola tidak valid!" }) }
+
+        const qrData = await readQRCode(pengelola.qr_code)
+        if (!qrData) {return res.status(404).json({message:"Invalid QR Code, Please try again!"}) }
+
+        const testPrice = 100
+        const result = qrisDinamis.makeString(qrData, {nominal: testPrice.toString()})
+        QRCode.toDataURL(result, function (err, url) {
+            if (err) return res.status(404).json({message:"Error getting QR Code!"})
+            return res.status(200).json({
+                message: "Berhasil mendapatkan QR Dinamis, please check it with your phone!",
+                base64QR: url
+            })
+        })
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({ message: "Server Error!", error: e.message })
+    }
+}
+
 module.exports = {
     getAllPengelola,
     getDetailPengelola,
@@ -330,5 +392,6 @@ module.exports = {
     getTotalVisitor,
     getTotalRevenue,
     getTopRevenueWisata,
-    getAllWisataRevenue
+    getAllWisataRevenue,
+    getQrCodeValidation
 }

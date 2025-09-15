@@ -5,6 +5,7 @@ const verifyToken = require('../middleware/authMiddleware')
 
 router.get('/getPengelola', verifyToken, dinasController.getAllPengelola)
 router.get('/getDetailPengelola/:id', verifyToken, dinasController.getDetailPengelola)
+router.get('/getQrCodeValidation/:id', verifyToken, dinasController.getQrCodeValidation)
 router.patch('/approvePengelola/:id', verifyToken, dinasController.approvePengelola)
 
 router.get('/getAllWisataTotal', verifyToken, dinasController.getTotalWisata)
