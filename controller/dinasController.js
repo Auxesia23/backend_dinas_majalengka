@@ -1,4 +1,4 @@
-const {Pengelola, User, MessageApprovement, Transaksi, sequelize, Wisata} = require('../models')
+const {Pengelola, User, MessageApprovement, Transaksi, sequelize, Wisata, TransaksiDetail} = require('../models')
 const transporter = require('../helper/email')
 const qrisDinamis = require('@agungjsp/qris-dinamis')
 const QRCode = require('qrcode')
@@ -6,6 +6,8 @@ const {Jimp} = require('jimp')
 const jsQR = require('jsqr')
 const path = require('path')
 const fs = require('fs')
+const ExcelJS = require('exceljs')
+const { Op } = require('sequelize')
 
 //GET ALL PENGELOLA
 const getAllPengelola = async (req, res) => {
@@ -383,6 +385,103 @@ const getQrCodeValidation = async (req, res) => {
     }
 }
 
+const getMonthlyRevenue = async (req, res) => {
+    const { year, month } = req.params
+    const idRole = req.user.id_role
+    if (idRole !== 'DNS') { return res.status(403).json({ message: "Only Dinas can validate!" }) }
+    try {
+        if (!year || !month) {
+            return res.status(400).json({message:"Mohon isi tahun dan bulan!"})
+        }
+
+        const transaction = await Transaksi.findAll({
+            where: {
+                status: 'Terkonfirmasi',
+                createdAt: {
+                    [Op.gte]: new Date(year, month - 1, 1),
+                    [Op.lt]: new Date(year, month, 1),
+                }
+            },
+            attributes: [
+                'id_wisata',
+                [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'total_tiket'],
+                [sequelize.fn('sum', sequelize.col('total_bayar')), 'total_penjualan']
+            ],
+            group: ['id_wisata']
+        })
+
+        const detailTransaksi = await TransaksiDetail.findAll({
+            where: {
+                createdAt: {
+                    [Op.gte]: new Date(year, month - 1, 1),
+                    [Op.lt]: new Date(year, month, 1),
+                }
+            },
+            attributes: [
+                [sequelize.col('Transaksi.id_wisata'), 'id_wisata'],
+                [sequelize.fn('sum', sequelize.literal('CASE WHEN `TransaksiDetail`.`gender` = "L" THEN 1 ELSE 0 END')), 'jumlah_tiket_laki'],
+                [sequelize.fn('sum', sequelize.literal('CASE WHEN `TransaksiDetail`.`gender` = "P" THEN 1 ELSE 0 END')), 'jumlah_tiket_perempuan']
+            ],
+            include: [{
+                model: Transaksi,
+                attributes: [],
+                where: { status: 'Terkonfirmasi' }
+            }],
+            group: ['id_wisata'],
+            raw: true
+        })
+
+        const reportData = []
+        let no = 1
+        for (const trans of transaction) {
+            const wisata = await Wisata.findOne({ where: {id_wisata: trans.id_wisata} })
+            const detail = detailTransaksi.find(d => d.id_wisata === trans.id_wisata)
+
+            reportData.push({
+                no: no++,
+                nama_wisata: wisata ? wisata.nama_wisata : 'Unknown',
+                jumlah_tiket_laki: parseInt(detail ? detail.jumlah_tiket_laki : 0),
+                jumlah_tiket_perempuan: parseInt(detail ? detail.jumlah_tiket_perempuan : 0),
+                total_tiket: parseInt(trans.dataValues.total_tiket, 10),
+                total_penjualan: parseFloat(trans.dataValues.total_penjualan)
+            })
+        }
+
+        const workbook = new ExcelJS.Workbook()
+        const worksheet = workbook.addWorksheet(`Laporan Penjualan Bulan ${year}-${month}`)
+
+        worksheet.addRow([`Laporan Penjualan Bulan ${new Date(year, month - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric'})}`])
+        worksheet.mergeCells('A1:F1')
+        worksheet.getCell('A1').font = { size: 16, bold: true }
+        worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' }
+
+        worksheet.addRow(['No', 'Nama Wisata', 'Jumlah Tiket Laki-laki', 'Jumlah Tiket Perempuan', 'Total Tiket', 'Total Penjualan'])
+        worksheet.getRow(2).font = {bold: true}
+
+        reportData.forEach(row => {
+            worksheet.addRow([
+                row.no,
+                row.nama_wisata,
+                row.jumlah_tiket_laki,
+                row.jumlah_tiket_perempuan,
+                row.total_tiket,
+                row.total_penjualan
+            ])
+        })
+
+        worksheet.getColumn(6).numFmt = '"Rp"#,##0.00'
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        res.setHeader('Content-Disposition', `attachment; filename=Laporan_Penjualan_${year}-${month}.xlsx`)
+
+        await workbook.xlsx.write(res)
+        res.end()
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({message:"Error getting monthly revenue!", error: e.message})
+    }
+}
+
 module.exports = {
     getAllPengelola,
     getDetailPengelola,
@@ -393,5 +492,6 @@ module.exports = {
     getTotalRevenue,
     getTopRevenueWisata,
     getAllWisataRevenue,
-    getQrCodeValidation
+    getQrCodeValidation,
+    getMonthlyRevenue
 }
