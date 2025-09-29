@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require('express')
+const path = require('path')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
@@ -43,6 +44,12 @@ app.use('/wisata', wisataRoutes)
 
 //SCANNER
 app.use('/scan', scannerRoutes)
+
+//GET VIDEO
+app.get('/videoAds', (req, res) => {
+    const videoPath = path.join(__dirname, 'public', 'video', 'VideoIklan.mp4')
+    res.sendFile(videoPath)
+})
 
 app.listen(port, () => {
     console.log(`App listening on ${port} you can go to http://localhost:${port}`)
