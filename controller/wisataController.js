@@ -1,9 +1,19 @@
 const {Wisata, Transaksi, GaleriWisata, TransaksiDetail, sequelize, Pengelola, Rating, User} = require('../models')
+const qrisDinamis = require('@agungjsp/qris-dinamis')
+const QRCode = require('qrcode')
+const {Jimp} = require('jimp')
+const jsQR = require('jsqr')
+const path = require('path')
+const fs = require('fs')
 
 //GET LIST WISATA
 const getListWisata = async (req, res) => {
     try {
         const wisata = await Wisata.findAll()
+
+        if (wisata.length === 0) {
+            res.status(404).json({ message: "Belum ada wisata tersedia saat ini" })
+        }
 
         const baseURL = `${req.protocol}://${req.get('host')}`
 
@@ -32,12 +42,13 @@ const getMostPopularByTickets = async (req, res) => {
                 'id_wisata',
                 [sequelize.fn('sum', sequelize.col('jumlah_tiket')), 'total_tickets']
             ],
+            where: { status: 'Terkonfirmasi' },
             group: ['id_wisata'],
             order: [[sequelize.literal('total_tickets'), 'DESC']],
             limit: 1
         })
         if (popularWisata.length === 0) {
-            return res.status(200).json({ message: "Sepertinya tidak ada wisata populer saat ini!"})
+            return res.status(404).json({ message: "Sepertinya tidak ada wisata populer saat ini!"})
         }
         const idWisata = popularWisata[0].id_wisata
         const wisata = await Wisata.findOne({
@@ -121,36 +132,123 @@ const getWisataDetail = async (req, res) => {
     }
 }
 
-//SHOW QR CODE FROM PENGELOLA
-const getQrCodeWisata = async (req, res) => {
-    const wisataId = req.params.id
-    if (!wisataId) {
-        return res.status(404).json({message:"Wisata no existed"})
+//SHOW QR DYNAMIC FOR BUYING SINGLE TICKET
+async function readQRCode(imagePath) {
+    try {
+        const baseDir = path.join(__dirname, '..')
+        const finalPath = path.join(baseDir, imagePath.replace(/\\/g, '/'))
+        if (!fs.existsSync(finalPath)) {
+            console.error('File not found at:', finalPath);
+            return null; // Return null jika file tidak ditemukan
+        }
+
+        const imageBuffer = fs.readFileSync(finalPath)
+        const image = await Jimp.read(imageBuffer)
+        const { data, width, height } = image.bitmap
+        const code = jsQR(new Uint8ClampedArray(data), width, height)
+        console.log(finalPath)
+        if (code) {
+            console.log("QR code berhasil dibaca: " + code.data)
+            return code.data
+        } else {
+            console.log("Tidak ada QR code ditemukan di gambar.");
+            return null;
+        }
+    } catch (err) {
+        console.error('Error in readQRCode', err)
+        return null
     }
-    if (req.user.id_role !== 'USR') {
-        return res.status(401).json({message:"Anda harus seorang user!"})
+}
+const getQrDynamicSingle = async (req, res) => {
+    const wisataId = req.params.id
+    if (!wisataId) { return res.status(404).json({message:"Wisata no existed"}) }
+    const userRole = req.user.id_role
+    if (userRole !== 'USR') { return res.status(403).json({message:"Hanya User yang boleh mendapatkan QR Dinamis"})}
+    let ticket_details = req.body.tiket_details
+    if (ticket_details.length === 0) {return res.status(404).json({message:"Maaf ticket tidak terbaca!"})}
+    try {
+        const wisata = await Wisata.findOne({
+            where: {id_wisata: wisataId}
+        })
+        if (!wisata) {return res.status(404).json({message:"Wisata not existed!"}) }
+
+        const pengelola = await Pengelola.findOne({
+            where: {id_pengelola: wisata.id_pengelola}
+        })
+        if (!pengelola) {return res.status(404).json({message:"Pengelola tidak ada!"}) }
+
+        const totalTicket = ticket_details.length
+        const priceTicket = wisata.harga_tiket
+        const totalPriceTicket = totalTicket * priceTicket
+
+        const qrData = await readQRCode(pengelola.qr_code)
+        if (!qrData) {return res.status(404).json({message:"Invalid QR Code, Please try again!"}) }
+
+        const result = qrisDinamis.makeString(qrData, {nominal: totalPriceTicket.toString()})
+        QRCode.toDataURL(result, function (err, url) {
+            if (err) return res.status(404).json({message:"Error getting QR Code!"})
+            return res.status(200).json({
+                message: "Berhasil mendapatkan QR Dinamis",
+                hargaBayar: totalPriceTicket,
+                base64QR: url
+            })
+        })
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({message:"Server Error", error: e.message})
+    }
+}
+
+//SHOW QR DYNAMIC FOR BUYING BUNDLE TICKET
+const getQrDynamicBundle = async (req, res) => {
+    const wisataId = req.params.id
+    if (!wisataId) { return res.status(404).json({message:"Wisata no existed"}) }
+    const userRole = req.user.id_role
+    if (userRole !== 'USR') { return res.status(403).json({message:"Hanya User yang boleh mendapatkan QR Dinamis"})}
+    let bundleDetails = req.body.bundle_details
+    if (typeof bundleDetails === 'string') {
+        try {
+            bundleDetails = JSON.parse(bundleDetails)
+        } catch (e) {
+            return res.status(400).json({ message: "Format bundle_details tidak valid." })
+        }
+    }
+    if (!bundleDetails || !Array.isArray(bundleDetails) || bundleDetails.length === 0) {
+        return res.status(400).json({ message: "Detail Bundle tidak valid." })
     }
     try {
-        const wisata = await Wisata.findOne({where: {id_wisata: wisataId}})
-        if (!wisata) {
-            return res.status(404).json({message:"Wisata no existed"})
-        }
-        const pengelola = await Pengelola.findOne({where: {id_pengelola: wisata.id_pengelola}})
-        if (!pengelola) {
-            return res.status(404).json({message:"Pengelola no existed"})
-        }
-        const baseURL = `${req.protocol}://${req.get('host')}`
-        const  formattedPengelola = {
-            ...pengelola.toJSON(),
-            qr_code: `${baseURL}/${pengelola.qr_code.replace(/\\/g, '/').replace('public/', '')}`,
-        }
-        res.status(200).json({
-            message:"Qr code berhasil diambil dari pengelola",
-            qr_code: formattedPengelola.qr_code,
+        const wisata = await Wisata.findOne({
+            where: {id_wisata: wisataId}
         })
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ message: "Server Error" })
+        if (!wisata) {return res.status(404).json({message:"Wisata not existed!"}) }
+        const pengelola = await Pengelola.findOne({
+            where: {id_pengelola: wisata.id_pengelola}
+        })
+        if (!pengelola) { return res.status(404).json({message:"Pengelola tidak ada!"}) }
+
+        let totalTickets = 0
+        for (const bundle of bundleDetails) {
+            const { 'L': lakilaki, 'P': perempuan } = bundle
+            totalTickets += (lakilaki || 0) + (perempuan || 0)
+        }
+
+        const totalPrice = totalTickets * wisata.harga_tiket
+        const qrData = await readQRCode(pengelola.qr_code)
+        if (!qrData) { return res.status(404).json({message:"Invalid QR Code, Please try again!"}) }
+
+        const result = qrisDinamis.makeString(qrData, {nominal: totalPrice.toString()})
+        QRCode.toDataURL(result, function (err, url) {
+            if (err) return res.status(404).json({message:"Error getting QR Code!"})
+            return res.status(200).json({
+                message: "Berhasil mendapatkan QR Dinamis",
+                hargaBayar: totalPrice,
+                jumlahTiket: totalTickets,
+                base64QR: url
+            })
+        })
+    } catch (e) {
+        console.error(e)
+        return res.status(500).json({ message: "Server Error", error: e.message })
     }
 }
 
@@ -377,7 +475,8 @@ module.exports = {
     getMostPopularByTickets,
     getWisataDetail,
     buyTicketWisata,
-    getQrCodeWisata,
+    getQrDynamicSingle,
+    getQrDynamicBundle,
     buyTicketBundle,
     addRating
 }

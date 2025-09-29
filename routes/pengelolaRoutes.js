@@ -22,6 +22,8 @@ router.get('/getTotalPenjualan', verifyToken, pengelolaController.getTotalPenjua
 router.get('/getTotalPengunjung', verifyToken, pengelolaController.getTotalVisitor)
 router.get('/getDetailHistoryTransaction/:id', verifyToken, pengelolaController.checkDetailHistoryTransaction)
 
+router.get('/getMonthlyRevenueReport/:year/:month', verifyToken, pengelolaController.getMonthlyRevenueReport)
+
 router.post('/tambah-wisata',
     verifyToken,
     upload.fields([

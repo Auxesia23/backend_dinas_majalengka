@@ -102,7 +102,6 @@ dist
 
 # vuepress v2.x temp and cache directory
 .temp
-.cache
 
 # vitepress build output
 **/.vitepress/dist
@@ -136,6 +135,7 @@ dist
 .pnp.*
 
 # Public for png jpeg etc Files :)
-.png
-.jpeg
-.jpg
+/public/uploads/buktibayar/
+/public/uploads/pengelola/
+/public/uploads/wisata/
+/public/video/
