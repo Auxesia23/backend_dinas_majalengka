@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: .
+    depends_on:
+      - mysql
+    command: >
+      sh -c "
+        until nc -z mysql 3306; do
+          sleep 2;
+        done;
+        npx sequelize-cli db:migrate
+        npx sequelize-cli db:seed --seed 20250810130337-demo-role.js
+        npx sequelize-cli db:seed --seed 20250909160452-demo-dinas.js
+        npx sequelize-cli db:seed --seed 20250819045900-demo-wisata.js
+        node app.js
+      "
+    ports:
+      - "5050:5050"
+    env_file: .env
+    volumes:
+      - ./public:/app/public:rw
+
+  mysql:
+    image: docker.io/mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db_majalengka
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - ./data_mysql:/var/lib/mysql:rw
